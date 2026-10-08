@@ -16,7 +16,7 @@ ORDER = ["combined", "need_pressure", "contention", "waiting_ratio", "request_ra
 
 def fmt(x, nd=2):
     if isinstance(x, str):
-        return x.replace("_", r"\_")
+        return x.replace("%", r"\%").replace("_", r"\_")
     if pd.isna(x):
         return "--"
     if isinstance(x, (int,)) or (isinstance(x, float) and x.is_integer() and abs(x) >= 10):
@@ -24,14 +24,15 @@ def fmt(x, nd=2):
     return f"{x:.{nd}f}"
 
 
-def latex(df: pd.DataFrame, caption: str, label: str, nd=2) -> str:
+def latex(df: pd.DataFrame, caption: str, label: str, nd=2, wide=False) -> str:
     cols = list(df.columns)
-    lines = [r"\begin{table}[t]", r"\centering", r"\footnotesize", rf"\caption{{{caption}}}", rf"\label{{{label}}}",
+    env = "table*" if wide else "table"
+    lines = [rf"\begin{{{env}}}[t]", r"\centering", r"\footnotesize", rf"\caption{{{caption}}}", rf"\label{{{label}}}",
              r"\begin{tabular}{" + "l" + "r" * (len(cols) - 1) + "}", r"\toprule",
              " & ".join(fmt(c) for c in cols) + r" \\", r"\midrule"]
     for _, row in df.iterrows():
         lines.append(" & ".join(fmt(v, nd) for v in row.values) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
+    lines += [r"\bottomrule", r"\end{tabular}", rf"\end{{{env}}}", ""]
     return "\n".join(lines)
 
 
@@ -69,13 +70,13 @@ def main(argv=None):
            f"tuning split: {tmeta['totals']['sequences']:,} sequences, {tmeta['totals']['steps']:,} steps. "
            f"Machine: {meta['machine']['platform']} ({meta['machine']['cpu_count']} CPUs, "
            f"{meta['machine'].get('instance_type', 'local')}).")
-    write("tab_setup", latex(s, "Experimental setup per cell (test split). " + tot.replace("_", r"\_"), "tab:setup", 2))
+    write("tab_setup", latex(s, "Experimental setup per cell (test split). " + tot.replace("_", r"\_"), "tab:setup", 2, wide=True))
 
     o = ordered(read("overall"))
     t = pd.DataFrame({"method": o.method, "precision": ci(o, "precision"), "recall": ci(o, "recall"),
                       "F1": ci(o, "f1"), "FA/1000": o.fa_per_1000, "lead med.": o.lead_median,
                       r"lead$\geq$5": o.lead_ge_5, "alarms": o.alarms})
-    write("tab_main", latex(t, "Main results, unsafe target, $H_{max}=20$, test split, 95\\% bootstrap CIs.", "tab:main"))
+    write("tab_main", latex(t, "Main results, unsafe target, $H_{max}=20$, test split, 95\\% bootstrap CIs.", "tab:main", wide=True))
 
     p = read("per_scenario")
     p = ordered(p)
@@ -99,17 +100,17 @@ def main(argv=None):
     write("tab_lookahead", latex(t, "All methods on the sequences where the lookahead baseline was computed.", "tab:lookahead"))
 
     e = read("episode_outcomes")
-    write("tab_episodes", latex(e, "Unsafe-episode outcomes per scenario.", "tab:episodes"))
+    write("tab_episodes", latex(e, "Unsafe-episode outcomes per scenario.", "tab:episodes", wide=True))
 
     pl = read("paired_leads")
-    write("tab_paired", latex(pl, "Paired lead times: combined vs each method, on events both captured.", "tab:paired"))
+    write("tab_paired", latex(pl, "Paired lead times: combined vs each method, on events both captured.", "tab:paired", wide=True))
 
     sc = os.path.join(args.scaling, "scaling.csv")
     if os.path.exists(sc):
         df = pd.read_csv(sc)[["n", "m", "safety_us_per_call", "detect_us_per_call", "detect_calls_per_step",
                               "us_per_step", "vectorised_us_random_states", "reference_us_random_states", "speedup"]]
         df.columns = ["n", "m", "safety µs", "detect µs", "detect/step", "µs/step", "vec µs", "ref µs", "speed-up"]
-        write("tab_scaling", latex(df, "Runtime scaling.", "tab:scaling").replace("µ", r"$\mu$"))
+        write("tab_scaling", latex(df, "Runtime scaling (normal scenario, 2,000-step runs; reference timings on random valid states).", "tab:scaling", wide=True).replace("µ", r"$\mu$"))
     print("tables written to", args.out)
 
 

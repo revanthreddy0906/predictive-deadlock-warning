@@ -1,0 +1,18 @@
+# Option B (AWS EC2): tuning split, seeds 0-9,999.
+run_name: b_tuning
+split: tuning
+seeds: {start: 0, count: 10000}
+scenarios: [normal, spike, deadlock_prone]
+sizes:
+  - {processes: 10, resources: 5}
+  - {processes: 25, resources: 8}
+  - {processes: 50, resources: 10}
+  - {processes: 100, resources: 20}
+  - {processes: 200, resources: 20}
+steps: 15000
+indicator_window: 10
+min_safe_gap: 5
+lookahead: {max_n_all_seeds: 25, subsample_seeds: 200, subsample_by_n: {200: 50}}
+store_full_trace_seeds: 0
+chunk_size: 25
+workers: auto

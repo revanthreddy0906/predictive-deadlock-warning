@@ -6,3 +6,7 @@ results/
 *.parquet
 .DS_Store
 .claude/
+deployment/.state/
+results_localpilot/
+results_ec2/
+*.bundle

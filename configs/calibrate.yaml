@@ -1,0 +1,16 @@
+# Phase 8: class-balance check. Tuning seeds only. Scenario parameters come from
+# pdw/scenarios.py DEFAULTS (frozen); override here only while calibrating.
+run_name: calibrate
+split: tuning
+seeds: {start: 0, count: 200}
+scenarios: [normal, spike, deadlock_prone]
+sizes:
+  - {processes: 10, resources: 5}
+  - {processes: 25, resources: 8}
+  - {processes: 50, resources: 10}
+  - {processes: 100, resources: 20}
+  - {processes: 200, resources: 20}
+steps: 15000
+indicator_window: 10
+min_safe_gap: 5
+workers: auto

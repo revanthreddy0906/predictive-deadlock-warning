@@ -158,3 +158,26 @@ def is_deadlocked(state: SystemState) -> tuple[bool, frozenset[int]]:
     """Deadlock detection on a state: waiting processes request `pending`,
     running processes request nothing (optimistic assumption)."""
     return detect_deadlock(state.available, state.allocation, state.pending, state.active)
+
+
+# ------------------------------------------------------ lookahead baseline (B3)
+
+
+def lookahead_fraction(available, allocation, need, active, running) -> float:
+    """Fraction of running processes for which granting min(need_i, available) would
+    make the state unsafe. Costs one safety check per running process."""
+    idx = np.flatnonzero(running)
+    if idx.size == 0:
+        return 0.0
+    flips = 0
+    for i in idx:
+        req = np.minimum(need[i], available)
+        if not req.any():
+            continue
+        alloc = allocation.copy()
+        nd = need.copy()
+        alloc[i] += req
+        nd[i] -= req
+        if not is_safe(available - req, alloc, nd, active)[0]:
+            flips += 1
+    return flips / idx.size

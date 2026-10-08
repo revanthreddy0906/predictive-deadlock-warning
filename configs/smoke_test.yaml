@@ -1,0 +1,14 @@
+# Smoke check of the evaluation path on test seeds (tiny).
+run_name: smoke_test
+split: test
+seeds: {start: 100000, count: 20}
+scenarios: [normal, deadlock_prone]
+sizes:
+  - {processes: 5, resources: 3}
+steps: 200
+indicator_window: 10
+min_safe_gap: 5
+lookahead: {max_n_all_seeds: 25, subsample_seeds: 0}
+store_full_trace_seeds: 2
+chunk_size: 10
+workers: auto

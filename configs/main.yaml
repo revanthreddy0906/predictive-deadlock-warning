@@ -1,0 +1,17 @@
+# Phase 11 input: test split (seeds 100000+). All reported numbers come from here.
+run_name: main_test
+split: test
+seeds: {start: 100000, count: 2000}
+scenarios: [normal, spike, deadlock_prone]
+sizes:
+  - {processes: 10, resources: 5}
+  - {processes: 25, resources: 8}
+  - {processes: 50, resources: 10}
+  - {processes: 100, resources: 20}
+steps: 6000
+indicator_window: 10
+min_safe_gap: 5
+lookahead: {max_n_all_seeds: 25, subsample_seeds: 200}
+store_full_trace_seeds: 5
+chunk_size: 50
+workers: auto

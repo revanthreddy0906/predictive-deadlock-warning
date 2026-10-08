@@ -1,0 +1,14 @@
+# Quick end-to-end check (< 1 minute locally). Tuning seeds.
+run_name: smoke
+split: tuning
+seeds: {start: 0, count: 20}
+scenarios: [normal, deadlock_prone]
+sizes:
+  - {processes: 5, resources: 3}
+steps: 200
+indicator_window: 10
+min_safe_gap: 5
+lookahead: {max_n_all_seeds: 25, subsample_seeds: 0}
+store_full_trace_seeds: 2
+chunk_size: 10
+workers: auto

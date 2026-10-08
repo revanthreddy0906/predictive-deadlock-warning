@@ -183,3 +183,50 @@ Fallback (unchanged trigger, applied earlier if needed): drop n=100, 1,000 seeds
 - [ ] Censoring, episode-outcome, suppression, flicker, warm-up tests pass (A1–A5)
 - [ ] `lookahead` baseline reported alongside availability/random/single-indicator (B3)
 - [ ] Tuning constraint is non-vacuous and its feasibility is reported (B1)
+
+---
+
+## G. Decisions made during implementation (Oct 7)
+
+### G1. Alarm precision follows the glossary definition (clarifies F6)
+An alarm is **true** if any event onset lies in `[a + H_min, a + H_max]`. Several alarms before one event are all true; only the earliest unused one *captures* the event and gives its lead time, and one alarm can capture at most one event (F7). With the tuned refractory period this rarely matters.
+
+### G2. Suppression uses the merged-episode mask (refines A3 + A4)
+Alarms are suppressed on every step of a flicker-merged episode, including the short safe gaps inside it. Every unmasked alarm is therefore followed only by primary events.
+
+### G3. Deadlock target uses unmasked alarms (RQ6)
+For the deadlock target, alarms are recomputed with the same tuned parameters but **without** the unsafe mask, so a warning raised while the system is already unsafe can still anticipate the deadlock. Reported at H_max = 20 and 50.
+
+### G4. `availability` baseline == `scarcity` indicator
+`1 - sum(available)/sum(total)` is the scarcity indicator, so "alarm when available fraction < t_a" is scarcity alone. It is reported once, as `availability`.
+
+### G5. Uniform threshold grid
+Every score-based method (including baselines) sweeps threshold 5..95 step 5 on a 0-100 score, k in {1,2,3}, R in {10,20}. This is a superset of the B4 grids and treats all methods alike.
+
+### G6. Simulator fixes found while testing
+- Completions are processed right after the pending-retry phase, and retry repeats until nothing changes: a process that finishes on retry frees units for other waiters in the same step.
+- `steps` cap raised to 6,000. With a fixed process set, sequences end by themselves (all finished or deadlock) after roughly 10n-40n steps, so the cap only binds rarely at n = 100.
+
+### G7. Spike scenario redesigned (calibration finding)
+The first spike design never produced unsafe states. A fixed-step burst landed at the very end of small sequences and the very start of large ones, and large requests let bursters finish and release. Now:
+- the burst starts when a random 20-60% of the initial total need has been requested (size-invariant);
+- it lasts max(20, n) steps;
+- 80% of processes burst;
+- each burst request takes 30-60% of the remaining need per resource, capped at what is available, and holds back the last unit.
+
+Even so, spike produces events at about the rate `normal` does at equal tightness. **Finding:** with known maximum claims, risk is driven mainly by claim tightness, not by sudden bursts.
+
+### G8. Frozen calibration (tuning seeds 0-199; `results/calibration.txt`)
+| Scenario | Tightness (configured) | Seqs with event, n=10/25/50/100 |
+|---|---|---|
+| normal | (1.5, 1.9) | 27% / 14% / 12% / 71% |
+| spike | (1.6, 2.1) | 69% / 65% / 57% / 61% |
+| deadlock_prone | (1.3, 2.2), finish_prob 0.3 | 40% / 46% / 47% / 95% |
+
+Realised tightness is about 0.25 below the configured value, because claims are rounded down per process. No events are too early to catch.
+
+### G9. Unsafe episodes almost always end in deadlock
+Processes really do request up to their maximum claims, so Banker's worst case is what actually happens: unsafe states rarely recover. This is an RQ6 result, not a bug. Recovery happens only through voluntary releases (`normal`).
+
+### G10. Multiprocessing outside the Claude Code sandbox
+`ProcessPoolExecutor` needs `os.sysconf("SC_SEM_NSEMS_MAX")`, which the macOS sandbox blocks. Run batch jobs from a normal terminal or EC2.

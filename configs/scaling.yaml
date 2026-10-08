@@ -1,0 +1,9 @@
+# Phase 12: runtime scaling. Tuning seeds (timing only, no evaluation).
+run_name: scaling
+scenario: normal
+processes: [10, 25, 50, 100, 200]
+resources: [5, 10, 20]
+steps: 2000
+seeds: {start: 0, count: 20}
+reference_states: 30
+workers: 4

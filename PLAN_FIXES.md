@@ -230,3 +230,26 @@ Processes really do request up to their maximum claims, so Banker's worst case i
 
 ### G10. Multiprocessing outside the Claude Code sandbox
 `ProcessPoolExecutor` needs `os.sysconf("SC_SEM_NSEMS_MAX")`, which the macOS sandbox blocks. Run batch jobs from a normal terminal or EC2.
+
+---
+
+## H. Cloud run decisions (Oct 8-9, Option B on AWS EC2)
+
+- **Scale:** 3 scenarios × 5 sizes (10-200 processes) × 10,000 seeds × 2 splits = 300,000 sequences (676M steps). The tuning seed range was widened to 0-99,999; test seeds stay at 100,000 and above.
+- **Step cap:** raised to 15,000. Measured beforehand: n=200 runs average 5,600-8,400 steps (maximum 11,209); none hit the cap.
+- **Lookahead subsample:** 50 seeds at n=200. There it costs about 39× the simulation itself (about 42 s per sequence on the Mac).
+- **Run mechanics:**
+  - chunk size 25, with the longest chunks scheduled first;
+  - a pilot run plus `experiments/project.py` projected 2.7 h; the actual pipeline took 2 h 43 min.
+- **Cost guards:**
+  - 10-hour OS stop timer; shutdown behaviour = stop;
+  - the instance stops itself 45 min after the pipeline ends;
+  - idle-CPU alarm, created after the user added `iam:CreateServiceLinkedRole` for events.amazonaws.com;
+  - tagged resources; teardown plus audit came back clean.
+  - Cost about $4.11 (2.86 instance-hours of c7i.8xlarge).
+- **Findings that changed against the Mac dry run (48k sequences):**
+  - combined F1 0.28 (Mac: 0.35);
+  - the tuned weights double contention (Mac: drop waiting ratio);
+  - on jointly caught events lookahead's lead is similar to combined's (EC2: 4 vs 5 steps; Mac: 3 vs 7).
+
+  The paper and report state the EC2 results. The trade-off is framed as **accuracy vs compute cost**, not timing.

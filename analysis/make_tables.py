@@ -9,12 +9,15 @@ import argparse
 import json
 import os
 
+import numpy as np
 import pandas as pd
 
 ORDER = ["combined", "need_pressure", "contention", "waiting_ratio", "request_rate", "availability", "lookahead", "random"]
 
 
 def fmt(x, nd=2):
+    if isinstance(x, (int, np.integer)):
+        return f"{int(x):,}".replace(",", "{,}")
     if isinstance(x, str):
         return x.replace("%", r"\%").replace("_", r"\_")
     if pd.isna(x):
@@ -24,14 +27,14 @@ def fmt(x, nd=2):
     return f"{x:.{nd}f}"
 
 
-def latex(df: pd.DataFrame, caption: str, label: str, nd=2, wide=False) -> str:
+def latex(df: pd.DataFrame, caption: str, label: str, nd=2, wide=False, place="t") -> str:
     cols = list(df.columns)
     env = "table*" if wide else "table"
-    lines = [rf"\begin{{{env}}}[t]", r"\centering", r"\footnotesize", rf"\caption{{{caption}}}", rf"\label{{{label}}}",
+    lines = [rf"\begin{{{env}}}[{place}]", r"\centering", r"\footnotesize", rf"\caption{{{caption}}}", rf"\label{{{label}}}",
              r"\begin{tabular}{" + "l" + "r" * (len(cols) - 1) + "}", r"\toprule",
              " & ".join(fmt(c) for c in cols) + r" \\", r"\midrule"]
-    for _, row in df.iterrows():
-        lines.append(" & ".join(fmt(v, nd) for v in row.values) + r" \\")
+    for row in df.astype(object).itertuples(index=False):  # iterrows would upcast ints to floats
+        lines.append(" & ".join(fmt(v, nd) for v in row) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}", rf"\end{{{env}}}", ""]
     return "\n".join(lines)
 
@@ -76,7 +79,7 @@ def main(argv=None):
     o = ordered(read("overall"))
     t = pd.DataFrame({"method": o.method, "precision": ci(o, "precision"), "recall": ci(o, "recall"),
                       "F1": ci(o, "f1"), "FA/1000": o.fa_per_1000, "lead med.": o.lead_median.map(lambda v: f"{v:.0f}" if pd.notna(v) else "--"),
-                      r"lead$\geq$5": o.lead_ge_5, "alarms": o.alarms})
+                      r"lead$\geq$5": o.lead_ge_5, "alarms": o.alarms.round().astype(int)})
     write("tab_main", latex(t, "Main results, unsafe target, $H_{max}=20$, test split, 95\\% bootstrap CIs.", "tab:main", wide=True))
 
     p = read("per_scenario")
@@ -111,10 +114,12 @@ def main(argv=None):
 
     sc = os.path.join(args.scaling, "scaling.csv")
     if os.path.exists(sc):
-        df = pd.read_csv(sc)[["n", "m", "safety_us_per_call", "detect_us_per_call", "detect_calls_per_step",
-                              "us_per_step", "vectorised_us_random_states", "reference_us_random_states", "speedup"]]
-        df.columns = ["n", "m", "safety µs", "detect µs", "detect/step", "µs/step", "vec µs", "ref µs", "speed-up"]
-        write("tab_scaling", latex(df, "Runtime scaling (normal scenario, 2,000-step runs; reference timings on random valid states).", "tab:scaling", wide=True).replace("µ", r"$\mu$"))
+        df = pd.read_csv(sc)[["n", "m", "vectorised_us_random_states", "reference_us_random_states", "speedup",
+                              "us_per_step"]]
+        df.columns = ["n", "m", "vec µs", "ref µs", "speed-up", "µs/step"]
+        write("tab_scaling", latex(df, "Runtime scaling: time per Banker's safety check on random valid states "
+                                       "(vectorised vs. reference) and whole-simulator time per step.",
+                                   "tab:scaling", nd=1, place="!htb").replace("µ", r"$\mu$"))
     print("tables written to", args.out)
 
 

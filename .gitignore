@@ -10,3 +10,5 @@ deployment/.state/
 results_localpilot/
 results_ec2/
 *.bundle
+paper/*.log
+paper/*.aux

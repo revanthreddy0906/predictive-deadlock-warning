@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Deadlock-onset target ($H_{max}=20$, alarms not masked while unsafe).}
+\label{tab:deadlock}
+\begin{tabular}{lrrrrr}
+\toprule
+method & precision & recall & F1 & lead med. & events \\
+\midrule
+combined & 0.21 & 0.71 & 0.33 & 13 & 77{,}700 \\
+need\_pressure & 0.18 & 0.34 & 0.23 & 10 & 77{,}700 \\
+contention & 0.17 & 0.54 & 0.26 & 12 & 77{,}700 \\
+waiting\_ratio & 0.33 & 0.83 & 0.48 & 12 & 77{,}700 \\
+request\_rate & 0.07 & 0.06 & 0.06 & 15 & 77{,}700 \\
+availability & 0.10 & 0.52 & 0.16 & 10 & 77{,}700 \\
+lookahead & 0.32 & 0.43 & 0.37 & 15 & 25{,}862 \\
+random & 0.00 & 0.01 & 0.01 & 10 & 77{,}700 \\
+\bottomrule
+\end{tabular}
+\end{table}

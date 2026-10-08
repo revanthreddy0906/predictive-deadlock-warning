@@ -165,14 +165,15 @@ def fig_hmax(ev_dir, out):
     for ax, metric in zip(axes, ["precision", "recall"]):
         for m in [x for x in ORDER if x in df.method.unique()]:
             g = df[df.method == m].sort_values("H_max")
-            ax.plot(g.H_max, g[metric], color=COLOR[m], marker=MARKER[m], ms=4)
-            ax.annotate(LABEL[m], (g.H_max.iloc[-1], g[metric].iloc[-1]), xytext=(4, 0),
-                        textcoords="offset points", fontsize=6, color=INK, va="center")
+            ax.plot(g.H_max, g[metric], color=COLOR[m], marker=MARKER[m], ms=4, label=LABEL[m])
         ax.set_xscale("log")
         ax.set_xticks([5, 10, 20, 50], ["5", "10", "20", "50"])
+        ax.minorticks_off()
         ax.set_xlabel("H_max (steps)")
         ax.set_ylabel(metric)
         ax.set_ylim(0, 1)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.12))
     fig.tight_layout()
     save(fig, out, "fig5_hmax_sensitivity")
 

@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Ablation: combined score with one indicator removed (each re-tuned on the tuning split).}
+\label{tab:ablation}
+\begin{tabular}{lrrrr}
+\toprule
+variant & precision & recall & F1 & FA/1000 \\
+\midrule
+all five, equal & 0.17 & 0.40 & 0.24 & 0.59 \\
+without scarcity & 0.19 & 0.39 & 0.26 & 0.47 \\
+without need\_pressure & 0.17 & 0.45 & 0.25 & 0.64 \\
+without contention & 0.14 & 0.36 & 0.20 & 0.65 \\
+without waiting\_ratio & 0.23 & 0.31 & 0.27 & 0.30 \\
+without request\_rate & 0.15 & 0.41 & 0.22 & 0.93 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -112,6 +112,14 @@ def main(argv=None):
     if aws:
         aws_text = "\n".join(f"- **{k}:** {v}" for k, v in aws.items())
 
+    look_cost, look_n = float("nan"), None
+    summ = os.path.join(args.run, "summary.parquet")
+    if os.path.exists(summ):
+        sm = pd.read_parquet(summ)
+        lkr = sm[sm.lookahead_time > 0]
+        look_n = int(lkr.n.max())
+        big = lkr[lkr.n == look_n]
+        look_cost = big.lookahead_time.sum() / (big.runtime - big.lookahead_time).sum()
     lk = sub.loc["lookahead"]
     cs = sub.loc["combined"]
     pl = pairs.loc["lookahead"]
@@ -147,11 +155,14 @@ Settings were tuned on {tmeta['totals']['sequences']:,} sequences and all report
    in advance with {100 * c.precision:.0f}% of its alarms correct (F1 = {f2(c.f1)}), giving a median
    **{c.lead_median:.0f} steps of warning**. Random alarms at the same rate score F1 = {f2(ov.loc['random', 'f1'])},
    and the simple "free resources are low" rule scores {f2(ov.loc['availability', 'f1'])}.
-2. **Contention is the single most useful signal** (F1 = {f2(ov.loc['contention', 'f1'])} on its own). Combining
-   all five signals dilutes it; dropping the weakest signal helps.
-3. **An exact but expensive lookahead check is more accurate** (F1 = {f2(lk.f1)} vs {f2(cs.f1)} for our score on
-   the same sequences) **but warns later** (median {pl.other_median:.0f} vs {pl.combined_median:.0f} steps) and costs
-   one extra safety check per process per step. Cheap-and-early versus exact-and-late is the central trade-off.
+2. **Contention is the single most useful signal** (F1 = {f2(ov.loc['contention', 'f1'])} on its own). Averaging in
+   weaker signals dilutes it: the tuner's best combination doubled contention's weight
+   ("{best['combined']['weights_name']}").
+3. **An exact one-step lookahead check is much more accurate** (F1 = {f2(lk.f1)} vs {f2(cs.f1)} for our score on
+   the same sequences), with **similar lead times** on the events both caught (median {pl.other_median:.0f} steps for lookahead,
+   {pl.combined_median:.0f} for ours), **but it is expensive**: one extra safety check per running process per step,
+   {look_cost:.0f}× the computation of the whole simulation at {look_n} processes. Cheap-and-moderate versus
+   exact-and-costly is the central trade-off.
 4. **Sudden bursts are easiest to predict, slow build-ups hardest** (F1 {f2(ps[(ps.method == 'combined') & (ps.scenario == 'spike')].f1.iloc[0])}
    for spikes vs {f2(ps[(ps.method == 'combined') & (ps.scenario == 'normal')].f1.iloc[0])} for normal workloads).
 5. **"Unsafe" almost always became "deadlock"** in our model ({ep.loc['spike', 'deadlocked_frac'] * 100:.0f}% of
@@ -265,16 +276,17 @@ confidence intervals → speed study → tables and figures. Every run stores it
 warned about in advance. *F1* combines both. Lookahead is computed on part of the runs (all runs up to 25 processes,
 a sample above), so on exactly those runs: lookahead F1 = {f2(lk.f1)}, combined = {f2(cs.f1)}.
 
-**Reading it:** our score is far better than chance and better than the simple free-resource rule, and gives the
-earliest warnings. On danger events that both caught, our score warned earlier than lookahead in
-{pl.combined_earlier_frac * 100:.0f}% of {int(pl.pairs):,} cases and earlier than the free-resource rule
-({pa.combined_median:.0f} vs {pa.other_median:.0f} steps median).
+**Reading it:** our score is far better than chance and clearly better than the simple free-resource rule. On
+danger events that both caught, it warned earlier than the free-resource rule ({pa.combined_median:.0f} vs
+{pa.other_median:.0f} steps median); against lookahead the lead times were similar ({pl.combined_median:.0f} vs
+{pl.other_median:.0f} steps over {int(pl.pairs):,} shared events).
 
 ## 6.3 Which signals matter (ablation)
 {table(pd.DataFrame(abl_rows))}
 
-Removing contention or request rate hurts most; removing waiting ratio *helps*, so the tuner chose the combination
-without it. Adding weak signals to a strong one dilutes it.
+Removing contention or request rate hurts the equal-weight combination most; removing waiting ratio *helps*.
+Adding weak signals to a strong one dilutes it, which is why the tuner's best combination doubled contention's
+weight.
 
 ## 6.4 By scenario (F1)
 {table(pd.DataFrame(scen_rows))}
@@ -283,7 +295,8 @@ without it. Adding weak signals to a strong one dilutes it.
 
 Spikes are easiest: several signals rise together, and the danger starts a median {spike.median_steps_from_spike_start:.0f}
 steps after the burst begins (only {spike.event_before_spike * 100:.1f}% before it). Slow build-ups give little warning
-before the line is crossed; there, waiting ratio and contention do best.
+before the line is crossed; there, waiting ratio alone does better than the combination. Contention's overall lead
+comes mainly from spikes.
 
 ## 6.5 Unsafe versus deadlock
 {table(ep.reset_index()[["scenario", "ep_recovered", "ep_deadlocked", "deadlocked_frac"]].assign(deadlocked_frac=lambda d: (100 * d.deadlocked_frac).round(0).astype(int).astype(str) + "%").rename(columns={"scenario": "Scenario", "ep_recovered": "Recovered", "ep_deadlocked": "Became deadlock", "deadlocked_frac": "Deadlock share"}))}
@@ -294,7 +307,9 @@ Predicting the deadlock itself (alarms allowed while already unsafe):
 
 ![What happened to unsafe episodes in each scenario.](figures/fig6_episode_outcomes.png){{ width=70% }}
 
-Waiting ratio is the best deadlock predictor: blocked processes pile up as a deadlock forms.
+With a 20-step window, waiting ratio is the best deadlock predictor (F1 {f2(dl20.loc['waiting_ratio', 'f1'])}):
+blocked processes pile up as a deadlock forms. With a 50-step window lookahead leads
+({f2(dl50.loc['lookahead', 'f1'])}, on its subset of runs).
 
 ## 6.6 Warning window
 With the same alarms, a wider window counts more alarms as correct: combined F1 = {f2(h.get(5))} (5 steps),
@@ -315,8 +330,9 @@ window sensitivity, episode outcomes, scaling, speed-up).
 - Claim tightness, which largely decides whether a run becomes unsafe, was chosen to give a balanced mix.
 - Signals and Banker's check read the same state, so some correlation is built in — this is why we compare against
   random, free-resource and lookahead baselines.
-- Lookahead was computed on a subset of runs for large systems; two methods chose thresholds at the edge of the
-  tuning grid.
+- Lookahead was computed on a subset of runs for large systems.
+- Three single-signal baselines (need pressure, request rate, availability) chose the highest threshold in the
+  tuning grid, so slightly better settings may exist for them.
 
 # 8. How to reproduce
 ```
@@ -335,7 +351,7 @@ AWS launch, monitoring and clean-up scripts are in `deployment/` (`aws_launch.sh
 4. Correctness: safe never coexists with deadlock; unsafe can recover; lead time 0 is a miss; long alarms count
    once; alarms at the end of a cut-off run are excluded.
 5. Results: F1 {f2(c.f1)} vs {f2(ov.loc['random', 'f1'])} random and {f2(ov.loc['availability', 'f1'])} free-resource rule;
-   median {c.lead_median:.0f} steps of warning; lookahead {f2(lk.f1)} but later and costly.
+   median {c.lead_median:.0f} steps of warning; lookahead {f2(lk.f1)} but {look_cost:.0f}× more compute.
 6. Scale: {n_seq:,} sequences, {n_steps / 1e6:.0f} million safety checks, run on AWS EC2.
 7. Limitations and future work: real traces, learned models, two-stage warning (cheap score first, lookahead only
    when the score is high).

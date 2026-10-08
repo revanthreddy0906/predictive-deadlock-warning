@@ -61,7 +61,8 @@ def main(argv=None):
     meta = json.load(open(os.path.join(args.run, "meta.json")))
     tmeta = json.load(open(os.path.join(args.tuning, "meta.json")))
     setup = read("setup")
-    s = setup.copy()
+    order = {"normal": 0, "spike": 1, "deadlock_prone": 2}
+    s = setup.assign(_o=setup.scenario.map(order)).sort_values(["_o", "n"]).drop(columns="_o")
     s["with_event"] = (100 * s["with_event"]).round(1)
     s["deadlock_end"] = (100 * s["deadlock_end"]).round(1)
     s = s[["scenario", "n", "m", "sequences", "steps", "events", "with_event", "deadlock_end", "tightness"]]
@@ -74,7 +75,7 @@ def main(argv=None):
 
     o = ordered(read("overall"))
     t = pd.DataFrame({"method": o.method, "precision": ci(o, "precision"), "recall": ci(o, "recall"),
-                      "F1": ci(o, "f1"), "FA/1000": o.fa_per_1000, "lead med.": o.lead_median,
+                      "F1": ci(o, "f1"), "FA/1000": o.fa_per_1000, "lead med.": o.lead_median.map(lambda v: f"{v:.0f}" if pd.notna(v) else "--"),
                       r"lead$\geq$5": o.lead_ge_5, "alarms": o.alarms})
     write("tab_main", latex(t, "Main results, unsafe target, $H_{max}=20$, test split, 95\\% bootstrap CIs.", "tab:main", wide=True))
 
@@ -87,16 +88,19 @@ def main(argv=None):
     d = read("deadlock_target")
     d = ordered(d[d.H_max == 20])
     t = pd.DataFrame({"method": d.method, "precision": d.precision, "recall": d.recall, "F1": d.f1,
-                      "lead med.": d.lead_median, "events": d.events})
+                      "lead med.": d.lead_median.map(lambda v: f"{v:.0f}" if pd.notna(v) else "--"), "events": d.events})
     write("tab_deadlock", latex(t, "Deadlock-onset target ($H_{max}=20$, alarms not masked while unsafe).", "tab:deadlock"))
 
     a = read("ablation")
-    t = a[["method", "precision", "recall", "f1", "fa_per_1000", "lead_median"]]
+    t = a[["method", "precision", "recall", "f1", "fa_per_1000"]].copy()
+    t["method"] = t["method"].str.replace("combined[equal]", "all five, equal", regex=False) \
+        .str.replace(r"combined\[drop_(.*)\]", r"without \1", regex=True)
+    t.columns = ["variant", "precision", "recall", "F1", "FA/1000"]
     write("tab_ablation", latex(t, "Ablation: combined score with one indicator removed (each re-tuned on the tuning split).", "tab:ablation"))
 
     l = ordered(read("lookahead_subset"))
     t = pd.DataFrame({"method": l.method, "precision": l.precision, "recall": l.recall, "F1": ci(l, "f1"),
-                      "lead med.": l.lead_median})
+                      "lead med.": l.lead_median.map(lambda v: f"{v:.0f}" if pd.notna(v) else "--")})
     write("tab_lookahead", latex(t, "All methods on the sequences where the lookahead baseline was computed.", "tab:lookahead"))
 
     e = read("episode_outcomes")

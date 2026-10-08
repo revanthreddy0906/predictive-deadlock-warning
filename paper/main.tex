@@ -1,0 +1,187 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+  \setmainfont{texgyretermes}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+  \setmonofont{texgyrecursor}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage{newtxtext,newtxmath}
+\fi
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\graphicspath{{figures/}}
+\input{numbers}
+
+\begin{document}
+
+\title{Predictive Deadlock Warning: Early Detection of Unsafe States from Resource-Request Patterns}
+
+\author{\IEEEauthorblockN{Revanth Reddy Lingala and Sujju}
+\IEEEauthorblockA{Department of Information Technology\\
+Chaitanya Bharathi Institute of Technology (CBIT), Hyderabad, India}}
+
+\maketitle
+
+\begin{abstract}
+Banker's algorithm tells an operating system whether the current resource-allocation state is \emph{safe}; it gives no signal that the system is drifting towards an unsafe state. We ask whether simple, explainable indicators computed from the allocation state and the recent request stream can raise an alarm \emph{before} Banker's algorithm reports an unsafe state, and how early and how reliably. We design a rule-based (no machine learning) early-warning algorithm that combines five indicators---resource scarcity, need pressure, contention, waiting ratio and request rate---into a 0--100 risk score with a persistence ($k$) and refractory rule. A purpose-built observer-mode simulator grants every valid request, so the system can actually become unsafe, and records Banker's safety and deadlock-detection outcomes at every step. We evaluate with event-based metrics from the early-warning literature (alarm precision, event recall, lead time, censoring and refractory periods) against explicit baselines, tuning on one seed range and reporting on a disjoint one. Over \NSeqAll{} simulated sequences (\NStepsAllM{} million requests, each followed by a Banker's safety check) across three workload scenarios and \NSizes{} system sizes up to \MaxN{} processes, the combined score reached F1 = \CombF{} [\CombFlo, \CombFhi] with a median warning \CombLead{} steps ahead of the unsafe onset, versus \AvailF{} for a free-resource threshold and \RandF{} for random alarms at a matched rate. A single indicator, contention, scored \ContF{}, and an expensive one-step lookahead baseline scored \LookFsub{} on the sequences where it was computed but warned later (median \LookLead{} steps). Unsafe episodes almost always ended in deadlock when processes eventually request their full claims. Cheap indicators therefore give early but moderate warnings, while exact lookahead is accurate but late and costly.
+\end{abstract}
+
+\begin{IEEEkeywords}
+deadlock, Banker's algorithm, early warning, resource allocation, operating systems, simulation
+\end{IEEEkeywords}
+
+\section{Introduction}
+Deadlock handling is a core operating-system concern: processes that hold resources while waiting for others can block each other forever. The classical avoidance method, Banker's algorithm~\cite{dijkstra1965,silberschatz}, checks whether a state is \emph{safe}---whether some ordering lets every process obtain its maximum remaining claim and finish. The check is binary and instantaneous: it says \emph{safe now} or \emph{unsafe now}, but nothing about whether the system is heading towards trouble.
+
+This paper studies a complementary question, analogous to a smoke detector that sounds before the fire alarm: \emph{can simple signals warn that an unsafe state is coming, before Banker's algorithm detects it?} We address seven research questions:
+\begin{itemize}
+\item RQ1: Do indicators computed from resource-request patterns give early warning of an unsafe state?
+\item RQ2: How much lead time do alarms provide?
+\item RQ3: What alarm precision and event recall do they achieve?
+\item RQ4: Which indicators contribute most, and does the combined score beat simple baselines?
+\item RQ5: How does warning quality vary across workload scenarios?
+\item RQ6: How often do unsafe states become deadlocks, and can alarms anticipate deadlocks?
+\item RQ7: How does runtime scale with processes and resources?
+\end{itemize}
+
+Fig.~\ref{fig:timeline} shows the idea on three test sequences: the risk score rises, an alarm fires, and the system turns unsafe and then deadlocks some steps later.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig1_timelines.pdf}
+\caption{Example test sequences (25 processes, 8 resource types), one per scenario. Blue: combined risk score; dashed: tuned threshold; triangles: alarm onsets; red band: unsafe episode; red line: deadlock; amber band: spike burst.}
+\label{fig:timeline}
+\end{figure*}
+
+Our contributions are: (i) a fully explainable, rule-based early-warning algorithm with no trained model; (ii) an observer-mode simulator with three controlled workload scenarios; (iii) an event-based evaluation protocol borrowed from clinical and earthquake early warning~\cite{hyland2020,munchmeyer2020}, with censoring, refractory periods and strict lead-time rules; (iv) explicit baselines including random alarms at a matched rate and an exact one-step lookahead; (v) separate measurement of unsafe and deadlocked outcomes; and (vi) a scaling study, with all experiments run headless on AWS EC2.
+
+\section{Background}
+\subsection{System model and Banker's algorithm}
+A system has $m$ resource types with $\mathit{total}_j$ units each and $n$ processes. Process $i$ declares a maximum claim $\mathit{Max}_{ij}$, holds $\mathit{Alloc}_{ij}$ and may still request $\mathit{Need}_{ij} = \mathit{Max}_{ij} - \mathit{Alloc}_{ij}$. Free units are $\mathit{Avail}_j = \mathit{total}_j - \sum_i \mathit{Alloc}_{ij}$. Banker's safety check~\cite{dijkstra1965,silberschatz} repeatedly picks an unfinished process whose need fits the working vector, lets it finish and returns its allocation; the state is safe if every process can finish. The standard algorithm costs $\Theta(m n^2)$ time~\cite{mitwiki}; amortised $O(mn)$ variants~\cite{bit_modified_banker} and the dynamic DBDAA algorithm~\cite{zohora2024dbdaa} reduce this.
+
+\subsection{Unsafe is not deadlock}
+Banker's check is pessimistic: it assumes every process may request its full remaining claim. Deadlock detection is optimistic: it assumes running processes finish and release everything, so only blocked processes' pending requests matter~\cite{silberschatz,gottlieb_os}. A state can be safe and not deadlocked, unsafe and not deadlocked, or unsafe and deadlocked, but never safe and deadlocked~\cite{gottlieb_os}. We therefore record both outcomes at every step and use the unsafe onset as the primary prediction target and the deadlock onset as a secondary one.
+
+\section{Related Work}
+Faster safety checks~\cite{bit_modified_banker,zohora2024dbdaa} reduce the cost of answering ``safe now?'' but do not anticipate danger. Deadlock \emph{prediction} has been studied with machine learning: Le~Ngoc and Tran~Cong used linear regression to forecast deadlock possibility for virtual machines in CloudSim~\cite{lengoc2023}, and reinforcement-learning and AI-based predictors have been proposed for thread deadlocks~\cite{oluwaseyi2024}. Prediction is therefore not new at field level. Our work differs in three ways: the warning rule is fully explainable and untrained; scenarios are controlled so that gradual and sudden build-ups can be compared; and evaluation follows event-based early-warning practice---alarm precision and event recall~\cite{hyland2020}, warnings at or after onset counted as misses~\cite{munchmeyer2020}, refractory periods and random baselines at a matched alarm rate---which deadlock studies rarely apply.
+
+\section{Simulator}
+\subsection{Observer mode}
+If Banker's algorithm were used to \emph{refuse} unsafe requests, the system would never become unsafe and nothing could be predicted. Our simulator therefore grants every valid request and uses Banker's algorithm only to \emph{observe}. Each step: (1) waiting processes are retried first-come first-served, and any process whose claim is now met finishes and releases everything, repeating until nothing changes; (2) one active, non-waiting process issues a non-zero request no larger than its need---it is granted if it fits the free units and otherwise the process blocks with the request pending; (3) completed processes release their resources; (4) in the \textit{normal} scenario a process may voluntarily release part of its allocation; (5) the simulator records whether the state is unsafe, whether it is deadlocked, and the five indicators. A sequence ends at the first deadlock, when all processes finish, or at a step cap.
+
+\subsection{Correctness}
+Initial states are regenerated until safe. Invariants (conservation of units, allocation $\le$ claim, pending $\le$ need, finished processes hold nothing) are asserted in a debug mode used by the test suite. A vectorised NumPy safety check, which finishes every process that fits in each pass, is verified against the textbook loop on 2,000 random states, as is deadlock detection, together with the textbook examples of~\cite{silberschatz}. The property \emph{deadlocked $\Rightarrow$ unsafe} holds on all random states tested. Because detection assumes non-waiting processes release everything, grants to, releases by and completions of non-waiting processes cannot change the detection result; detection therefore reruns only when the waiting set or a pending request changes, which we verified against every-step detection. In total 122 unit and property tests cover every row of our edge-case matrix (system states, requests, life-cycle, indicators, alarm logic, evaluation and experiment hygiene).
+
+\subsection{Workload scenarios}
+Requests are fractions of remaining need, so behaviour is comparable across sizes. The main calibration parameter is claim tightness, $\sum_i \mathit{Max}_{ij} / \mathit{total}_j$; initial states draw it from a scenario-specific range. \textit{Normal}: small single-resource requests and occasional partial releases. \textit{Spike}: normal traffic, then---once a random 20--60\% of the initial total need has been requested---80\% of processes make broad grabs of 30--60\% of their remaining need, capped by free units, holding back the last unit. \textit{Deadlock-prone}: process $i$ prefers resource $(i{+}1) \bmod m$ and rarely takes its final unit. Parameters were calibrated on tuning seeds only so that each scenario yields a mix of sequences with and without unsafe events (\WithEventNormal\%, \WithEventSpike\% and \WithEventDlp\% of test sequences contain at least one, averaged over sizes).
+
+\section{Early-Warning Algorithm}
+After every step five indicators in $[0,1]$ are computed: \emph{scarcity} $= 1 - \sum_j \mathit{Avail}_j / \sum_j \mathit{total}_j$; \emph{need pressure} $= \frac{1}{m}\sum_j S_j/(S_j + \mathit{Avail}_j)$, where $S_j$ is the total outstanding need of active processes; \emph{contention}, the fraction of resource types for which at least two active processes need more than is free; \emph{waiting ratio}, the fraction of active processes that are blocked; and \emph{request rate}, the clipped relative increase in units requested over the last $W{=}10$ steps compared with the previous 10. The risk score is the weighted mean $100 \sum_i w_i x_i / \sum_i w_i$. An \emph{alarm onset} occurs at step $t$ if the score has been at least the threshold for $k$ consecutive steps ending at $t$ and no onset occurred in the previous $R$ steps (refractory period). Alarms are suppressed while the system is already unsafe, since Banker's algorithm is then already signalling. The tuned combined score uses threshold \CombTh, $k=\CombK$, $R=\CombRf$ and weights ``\CombW''.
+
+\section{Evaluation Method}
+\subsection{Events and metrics}
+An \emph{unsafe onset} is a step where the state becomes unsafe; onsets after fewer than five safe steps are merged into the previous episode. An alarm at step $a$ is \emph{true} if an onset falls in $[a{+}1, a{+}H_{\max}]$ ($H_{\max}=20$); an onset is \emph{captured} by the earliest unused alarm in its window, giving its lead time. An alarm at the onset step is a miss (detection, not prediction). Alarms in the final $H_{\max}$ steps of a sequence cut by the step cap are \emph{censored} and excluded, whereas in sequences that ended by deadlock or completion the future is known and such alarms count as false. Onsets in the first three steps are too early for any method and are excluded for all methods. We report micro-averaged alarm precision, event recall, F1, false alarms per 1,000 steps, lead-time distributions and 95\% bootstrap confidence intervals (1,000 resamples of sequences, stratified by scenario and size).
+
+\subsection{Baselines}
+\emph{Availability} raises an alarm when the free fraction of units falls below a threshold; it is identical to the scarcity indicator alone. Each other indicator is also evaluated alone. \emph{Random} raises alarms independently at each eligible step with a rate matched, on the tuning split, to the number of alarms of the tuned combined score. \emph{Lookahead} is a strong, expensive reference: the fraction of running processes for which granting the largest feasible request would make the state unsafe; it costs one safety check per process per step and is therefore computed for all sequences with up to 25 processes and for a subset of seeds for larger systems.
+
+\subsection{Tuning and data split}
+Every method's parameters (threshold 5--95 in steps of 5, $k \in \{1,2,3\}$, $R \in \{10,20\}$, and for the combined score eleven weight vectors: equal, each indicator doubled, each removed) are chosen on tuning seeds to maximise F1 subject to at most 5 false alarms per 1,000 steps and a median lead of at least 3 steps. All reported numbers come from a disjoint test-seed range.
+
+\subsection{Experimental setup}
+Each of the three scenarios was run at \NSizes{} system sizes (10--\MaxN{} processes, 5--20 resource types) with \NSeedsPerCell{} seeds per cell for both the tuning and the test split: \NSeqTune{} tuning and \NSeqTest{} test sequences, \NStepsAllM{} million simulated requests in total (Table~\ref{tab:setup}). Experiments ran headless on \Machine{} (\CPUs{} vCPUs, \RamGB{} GB RAM) with Python, NumPy and a process pool; sequences were written as chunked Parquet files so interrupted runs resume, and every run records its configuration hash, code version and machine (commit \texttt{\GitCommit}).
+
+\input{tables/tab_setup}
+
+\section{Results}
+\input{tables/tab_main}
+
+\subsection{RQ1--RQ3: early warning, lead time, precision and recall}
+Table~\ref{tab:main} gives the main results. The combined score achieved F1 = \CombF{} (precision \CombP, recall \CombR) with \CombFA{} false alarms per 1,000 steps, against \RandF{} for random alarms at the same rate: indicators clearly carry predictive signal (RQ1). Captured events were warned a median of \CombLead{} steps ahead and \CombLeadFive{} of them at least five steps ahead (Fig.~\ref{fig:leads}; RQ2). Precision and recall are moderate (RQ3); Fig.~\ref{fig:pr} shows the full precision--recall trade-off.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig2_lead_times.pdf}
+\caption{Lead times of captured unsafe onsets ($H_{\max}=20$).}
+\label{fig:leads}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig3_pr_curves.pdf}
+\caption{Precision--recall curves (threshold sweep at the tuned $k$, $R$ and weights; plotted on test data, never used for selection). Large dots: tuned operating points; star: random baseline.}
+\label{fig:pr}
+\end{figure}
+
+\subsection{RQ4: which indicators matter}
+Contention alone (F1 = \ContF) scored slightly higher than the combined score, and need pressure (\NeedF), waiting ratio (\WaitF), request rate (\RateF) and availability (\AvailF) scored lower. The ablation (Table~\ref{tab:ablation}) shows that removing contention or request rate hurts the combined score most, while removing waiting ratio helps; the tuner selected the combination without waiting ratio. Averaging weaker indicators dilutes the strongest one---an argument for selecting indicators rather than combining all of them. On the sequences where it was computed, the exact lookahead baseline reached F1 = \LookFsub{} against \CombFsub{} for the combined score (Table~\ref{tab:lookahead}), but on events captured by both it warned later (median \PairLookOther{} vs.\ \PairLookComb{} steps; the combined score was earlier for \PairLookEarlier\% of \PairLookN{} paired events). The combined score also warned earlier than availability (\PairAvailComb{} vs.\ \PairAvailOther{} steps).
+
+\input{tables/tab_ablation}
+\input{tables/tab_lookahead}
+
+\subsection{RQ5: scenarios}
+Warning quality depends strongly on how danger builds (Fig.~\ref{fig:scen}, Table~\ref{tab:scenario}). Spike workloads were easiest (combined F1 = \CombFSpike): bursts raise several indicators at once, and unsafe onsets followed a median \SpikeMedSteps{} steps after the burst began (only \SpikeBefore\% occurred before it). Gradual build-ups were hardest: F1 = \CombFNormal{} for normal and \CombFDlp{} for deadlock-prone workloads, where waiting ratio (\WaitFNormal, \WaitFDlp) and contention (\ContFNormal, \ContFDlp) did better than the combination.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig4_per_scenario_f1.pdf}
+\caption{F1 per scenario with 95\% bootstrap confidence intervals.}
+\label{fig:scen}
+\end{figure}
+\input{tables/tab_per_scenario}
+
+\subsection{RQ6: unsafe versus deadlock}
+In our model unsafe episodes rarely recover: \EpDeadSpike\% of resolved episodes ended in deadlock under spike and \EpDeadDlp\% under deadlock-prone workloads, and \EpDeadNormal\% under normal workloads, where voluntary releases allow some recovery (Fig.~\ref{fig:episodes}). This is expected: processes eventually request their full claims, so Banker's worst-case assumption is realised. For the deadlock target, alarms are not suppressed during unsafe periods; waiting ratio is then the best predictor (F1 = \WaitFdl{} at $H_{\max}=20$, \WaitFdlL{} at $H_{\max}=50$; Table~\ref{tab:deadlock}), because blocked processes accumulate as a deadlock forms.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\columnwidth]{fig6_episode_outcomes.pdf}
+\caption{Outcome of resolved unsafe episodes per scenario.}
+\label{fig:episodes}
+\end{figure}
+\input{tables/tab_deadlock}
+
+\subsection{Sensitivity to the warning horizon}
+With the same alarms, widening the horizon raises F1 for every method (combined: \CombFHFive, \CombFHTen, \CombFHTwenty{} and \CombFHFifty{} for $H_{\max}$ = 5, 10, 20, 50; Fig.~\ref{fig:hmax}), showing that many alarms precede onsets by more than 20 steps.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig5_hmax_sensitivity.pdf}
+\caption{Precision and recall as the warning horizon $H_{\max}$ varies (same alarms).}
+\label{fig:hmax}
+\end{figure}
+
+\subsection{RQ7: runtime scaling}
+The vectorised safety check was \SpeedupMin$\times$ (10 processes) to \SpeedupMax$\times$ (\ScaleMaxN{} processes) faster than the textbook loop (Table~\ref{tab:scaling}, Fig.~\ref{fig:scaling}). Measured growth with $n$ was far below the $\Theta(mn^2)$ worst case (log--log slopes \SlopeVec{} vectorised and \SlopeRef{} reference at $m=20$): realistic states clear in a few passes, and NumPy overhead dominates at these sizes. Event-driven deadlock detection ran on only a small fraction of steps.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig7_scaling.pdf}
+\caption{Time per safety check versus number of processes (log--log), vectorised and reference implementations.}
+\label{fig:scaling}
+\end{figure}
+\input{tables/tab_scaling}
+
+\section{Discussion}
+\textbf{Circularity.} Indicators and Banker's check read the same state, so some correlation is built in; this is why we include availability, random and lookahead baselines. Beating random by a wide margin and availability by a clear margin shows the indicators add information; the lookahead baseline shows how much an exact---but expensive---state-based test can add.
+
+\textbf{A trade-off, not a winner.} Cheap indicators warn earlier but with moderate precision; lookahead is precise but late and costs $n$ safety checks per step. A practical design could use cheap indicators as a first stage and run lookahead only when the score is elevated.
+
+\textbf{Where alarms fail.} Gradual build-ups give little distinctive signal before the boundary is crossed; spikes are easier because several indicators move together.
+
+\section{Threats to Validity}
+Workloads are synthetic and processes declare maximum claims, as Banker's algorithm requires; real systems rarely know claims. The process set is fixed (no arrivals). Claim tightness, which largely determines whether a scenario becomes unsafe, was calibrated to give class balance. Flicker merging, the warm-up exclusion and ending a sequence at the first (possibly partial) deadlock are modelling choices. The lookahead baseline was computed on a subset of seeds for larger systems, so its comparison uses that subset. Thresholds for two methods were selected at the edge of the tuning grid.
+
+\section{Conclusion and Future Work}
+Simple, explainable indicators can warn of an approaching unsafe state several steps before Banker's algorithm detects it, at a clearly better-than-chance and better-than-availability level, with the strongest gains for sudden workload changes. Exact lookahead is more accurate but later and much more expensive. Future work: learned models on the same data, real traces, incremental safety checks~\cite{zohora2024dbdaa}, two-stage warning, and an avoidance-mode variant that acts on warnings.
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

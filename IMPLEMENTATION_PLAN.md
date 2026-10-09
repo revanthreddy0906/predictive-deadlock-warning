@@ -12,7 +12,7 @@
 |---|---|
 | Course | Operating Systems, CBIT (Information Technology) |
 | Component | Internal case study, 15 marks |
-| Team | Revanth Reddy Lingala and Sujju (2 members) |
+| Team | Revanth Reddy Lingala and Padigela Srujan (Sujju) (2 members) |
 | Faculty requirement | Implementation must run on a **server / cloud** |
 | Our interpretation | Headless experiments on **AWS EC2**, results written up as a **research paper**. No frontend |
 | Target submission | October 10, 2026 |
@@ -150,7 +150,7 @@ Per the timeline, by end of Oct 3 the following should be done: Phase 1 (state),
 # Predictive Deadlock Warning: Research-Backed Implementation Plan (v2)
 
 **Title:** Predictive Deadlock Warning: Early Detection of Unsafe States from Resource-Request Patterns
-**Team:** Revanth, Sujju
+**Team:** Revanth Reddy Lingala, Padigela Srujan (Sujju)
 **Deliverable:** Headless experiment engine run on AWS EC2 + research paper (no frontend)
 **Deadline target:** October 10, 2026
 

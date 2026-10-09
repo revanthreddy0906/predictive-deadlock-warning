@@ -1,7 +1,7 @@
 ---
 title: "Predictive Deadlock Warning — Project Report"
 subtitle: "Operating Systems case study, CBIT (Information Technology)"
-author: "Revanth Reddy Lingala and Sujju"
+author: "Revanth Reddy Lingala and Padigela Srujan"
 date: "October 2026"
 ---
 

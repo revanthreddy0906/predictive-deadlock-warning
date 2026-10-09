@@ -4,7 +4,7 @@ Early detection of unsafe states from resource-request patterns. A rule-based (n
 early-warning algorithm is evaluated against Banker's algorithm as ground truth, with
 event-based metrics (alarm precision, event recall, lead time) and explicit baselines.
 
-CBIT Operating Systems case study, Revanth Reddy Lingala and Sujju.
+CBIT Operating Systems case study, Revanth Reddy Lingala and Padigela Srujan.
 The full plan is in `IMPLEMENTATION_PLAN.md`; `PLAN_FIXES.md` overrides it where they differ.
 
 ## Layout

@@ -23,8 +23,8 @@ from experiments.run_batch import lookahead_subsample
 # Offline tuning/evaluation cost per stored step, relative to simulation cost per step.
 # Measured on the Mac run: tuning 4,014 CPU-s and simulation ~5,600 CPU-s (no lookahead)
 # for 27.9M steps -> ~0.7; evaluation roughly 0.25.
-TUNE_PER_SIM_STEP = 0.75
-EVAL_PER_SIM_STEP = 0.30
+TUNE_PER_SIM_STEP = 1.05  # full paper: 26 score sources instead of 19
+EVAL_PER_SIM_STEP = 0.45  # full paper: 12 methods + robustness rows
 EFFICIENCY = 0.85  # parallel efficiency (scheduling tail, I/O)
 
 

@@ -181,3 +181,46 @@ def lookahead_fraction(available, allocation, need, active, running) -> float:
         if not is_safe(available - req, alloc, nd, active)[0]:
             flips += 1
     return flips / idx.size
+
+
+# ------------------------------------------- additional baselines (full paper)
+
+
+def safety_margin(available, allocation, need, active, iters: int = 6) -> float:
+    """Largest fraction f in [0, 1] of the free units that could be removed while the
+    state stays safe (binary search, `iters` safety checks). A scalar, proportional
+    version of Finkel & Madduri's "minimum resources needed to remain safe".
+    Assumes the state is safe now (f >= 0)."""
+    available = np.asarray(available, dtype=np.int64)
+    if is_safe(np.zeros_like(available), allocation, need, active)[0]:
+        return 1.0
+    lo, hi = 0.0, 1.0
+    for _ in range(iters):
+        mid = (lo + hi) / 2
+        if is_safe(np.floor(available * (1 - mid)).astype(np.int64), allocation, need, active)[0]:
+            lo = mid
+        else:
+            hi = mid
+    return lo
+
+
+def lookahead_topk(available, allocation, need, active, running, k: int = 3) -> float:
+    """Cheap approximate lookahead: like lookahead_fraction, but only for the k running
+    processes with the largest feasible grant. Costs at most k safety checks."""
+    idx = np.flatnonzero(running)
+    if idx.size == 0:
+        return 0.0
+    grants = np.minimum(need[idx], available).sum(axis=1)
+    idx = idx[np.argsort(-grants, kind="stable")[:k]]
+    flips = 0
+    for i in idx:
+        req = np.minimum(need[i], available)
+        if not req.any():
+            continue
+        alloc = allocation.copy()
+        nd = need.copy()
+        alloc[i] += req
+        nd[i] -= req
+        if not is_safe(available - req, alloc, nd, active)[0]:
+            flips += 1
+    return flips / idx.size

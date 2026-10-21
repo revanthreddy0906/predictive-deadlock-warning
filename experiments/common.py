@@ -44,6 +44,6 @@ def seed_range(cfg: dict) -> range:
 def config_hash(cfg: dict) -> str:
     """Hash of everything that affects simulation output (not workers / run_name)."""
     keys = ("split", "seeds", "scenarios", "sizes", "steps", "indicator_window",
-            "scenario_params", "lookahead")
+            "scenario_params", "lookahead", "extras")
     blob = json.dumps({k: cfg.get(k) for k in keys}, sort_keys=True, default=str)
     return hashlib.sha256(blob.encode()).hexdigest()[:12]

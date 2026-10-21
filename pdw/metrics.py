@@ -125,6 +125,27 @@ def bootstrap_ci(df: pd.DataFrame, strata=("scenario", "n"), B: int = 1000, seed
     return out
 
 
+def nab_reward(lead: float, H_max: int = 20) -> float:
+    """NAB-style scaled sigmoid reward for a captured event: close to 1 for an alarm at the
+    start of the warning window (lead = H_max), falling towards 0 as the alarm approaches
+    the onset (Lavin & Ahmad 2015, adapted to look-back windows)."""
+    y = -float(lead) / H_max
+    return 2.0 / (1.0 + np.exp(5.0 * y)) - 1.0
+
+
+def nab_score(leads, false_alarms: float, events: float, H_max: int = 20,
+              a_fp: float = 0.11, a_fn: float = 1.0) -> float:
+    """Normalised NAB-style score in [-inf, 100]: 100 = every event caught at the earliest
+    point with no false alarm, 0 = no alarms at all ("null" detector). Standard profile
+    weights: false positive -0.11, missed event -1."""
+    if events <= 0:
+        return np.nan
+    leads = list(leads)
+    raw = sum(nab_reward(l, H_max) for l in leads) - a_fp * false_alarms - a_fn * (events - len(leads))
+    null, perfect = -a_fn * events, float(events)
+    return 100.0 * (raw - null) / (perfect - null)
+
+
 def paired_leads(leads_a: list[dict], leads_b: list[dict]) -> tuple[np.ndarray, np.ndarray]:
     """Lead times of two methods on events both captured (F11). Inputs are per-sequence
     {event_step: lead} dicts aligned by sequence."""

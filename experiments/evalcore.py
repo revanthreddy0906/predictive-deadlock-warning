@@ -6,9 +6,12 @@ feeds every method, threshold and target.
 
 from __future__ import annotations
 
+import os
+import pickle
+
 import numpy as np
 
-from pdw import events, warning
+from pdw import events, learned, warning
 from pdw.metrics import evaluate_sequence
 from pdw.simulator import SCENARIO_IDS
 
@@ -20,18 +23,45 @@ H_MIN = 1
 COUNTS = ("alarms", "true", "false", "censored", "events", "captured", "uncatchable", "T")
 
 
-def score_sources() -> list[tuple[str, str, tuple]]:
+MAX_WEIGHTS = ("equal", "double_contention", "drop_request_rate")  # combined_max variants
+
+
+def score_sources(extras: bool = False, ml: bool = False) -> list[tuple[str, str, tuple]]:
     """(method, weights_name, weights) for every score vector the tuner sweeps."""
-    out = [("combined", wn, w) for wn, w in warning.weight_grid()]
+    grid = warning.weight_grid()
+    out = [("combined", wn, w) for wn, w in grid]
     out += [(m, "-", ()) for m in (*warning.SINGLE, "availability", "lookahead")]
+    if extras:
+        out += [("combined_max", wn, w) for wn, w in grid if wn in MAX_WEIGHTS]
+        out += [("margin", "-", ()), ("approx_lookahead", "-", ())]
+    if ml:
+        out += [(m, "-", ()) for m in learned.LEARNED]
     return out
 
 
-def tuning_configs() -> list[dict]:
+def tuning_configs(extras: bool = False, ml: bool = False) -> list[dict]:
     return [
         {"method": m, "weights_name": wn, "weights": w, "threshold": th, "k": k, "R": R}
-        for m, wn, w in score_sources() for k in KS for R in REFRACTORIES for th in THRESHOLDS
+        for m, wn, w in score_sources(extras, ml) for k in KS for R in REFRACTORIES for th in THRESHOLDS
     ]
+
+
+def ml_tunes_on(seed: int) -> bool:
+    """Learned models are trained on even tuning seeds; their thresholds are tuned on odd ones."""
+    return seed % 2 == 1
+
+
+_MODELS: dict = {}
+
+
+def load_models(path: str | None) -> dict | None:
+    """Load (and cache per process) the learned models saved by experiments.train_ml."""
+    if not path or not os.path.exists(path):
+        return None
+    if path not in _MODELS:
+        with open(path, "rb") as f:
+            _MODELS[path] = pickle.load(f)
+    return _MODELS[path]
 
 
 def prepare(row: dict, gap: int) -> dict:
@@ -39,11 +69,21 @@ def prepare(row: dict, gap: int) -> dict:
     return {**row, "ev": ev}
 
 
-def score_for(seq: dict, method: str, weights) -> np.ndarray | None:
+def score_for(seq: dict, method: str, weights, models: dict | None = None,
+              noisy: bool = False) -> np.ndarray | None:
+    """Score vector for one sequence, or None if this sequence lacks the data it needs."""
     if method == "lookahead" and seq.get("lookahead") is None:
         return None
-    return warning.method_score(method, seq["indicators"], seq.get("lookahead"),
-                                weights if method == "combined" else warning.EQUAL_WEIGHTS)
+    if (method in warning.EXTRA_METHODS or noisy) and seq.get("extras") is None:
+        return None
+    if method in learned.LEARNED:
+        if models is None:
+            return None
+        ind = warning.noisy_indicators(seq["indicators"], seq["extras"]) if noisy else seq["indicators"]
+        return learned.score(models[method], ind, models.get("prior", 0.5))
+    w = weights if method in ("combined", "combined_max") else warning.EQUAL_WEIGHTS
+    return warning.method_score(method, seq["indicators"], seq.get("lookahead"), w,
+                                extras=seq.get("extras"), noisy=noisy)
 
 
 def eval_counts(alarms, ev_steps, seq: dict, H_max: int = H_MAX) -> dict:

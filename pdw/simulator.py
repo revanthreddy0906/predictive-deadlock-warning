@@ -29,6 +29,15 @@ from pdw.state import SystemState
 
 SCENARIO_IDS = {"normal": 0, "spike": 1, "deadlock_prone": 2}
 
+# Extra per-step measurements for the full paper (computed when extras=True):
+#   margin            1 - safety_margin: share of free units that cannot be removed safely
+#   approx_lookahead  top-k (k=3) approximate lookahead
+#   need_pressure_noisy, contention_noisy
+#                     the two claim-based indicators computed from misdeclared claims
+#                     (each max_claim[i, j] scaled by U(1 - noise, 1 + noise), fixed per run)
+EXTRAS = ("margin", "approx_lookahead", "need_pressure_noisy", "contention_noisy")
+CLAIM_NOISE = 0.2
+
 
 def _complete(state: SystemState) -> None:
     """Processes whose need reached zero finish and release everything (test-matrix row C1)."""
@@ -75,6 +84,7 @@ class SequenceResult:
     req_units: np.ndarray           # (T,) int32, units of the new request
     lookahead: np.ndarray | None    # (T,) float32 or None
     in_spike: np.ndarray            # (T,) bool
+    extras: np.ndarray | None = None  # (T, len(EXTRAS)) float32 or None
     exceeds_need: int = 0
     runtime: float = 0.0
     safety_time: float = 0.0
@@ -82,6 +92,9 @@ class SequenceResult:
     detect_time: float = 0.0
     detect_calls: int = 0
     lookahead_time: float = 0.0
+    extras_time: float = 0.0
+    margin_time: float = 0.0
+    approx_time: float = 0.0
     tightness: float = 0.0
     trace: dict | None = field(default=None, repr=False)
 
@@ -97,6 +110,7 @@ def simulate(
     lookahead: bool = False,
     store_trace: bool = False,
     debug: bool = False,
+    extras: bool = False,
 ) -> SequenceResult:
     t_start = time.perf_counter()
     rng = sequence_rng(seed, scenario, n, m)
@@ -111,10 +125,16 @@ def simulate(
     req_units = np.zeros(steps, np.int32)
     in_spike = np.zeros(steps, bool)
     look = np.full(steps, np.nan, np.float32) if lookahead else None
+    ext = np.full((steps, len(EXTRAS)), np.nan, np.float32) if extras else None
+    if extras:
+        # Separate stream so the simulated workload is identical with or without extras.
+        noise_rng = np.random.default_rng(np.random.SeedSequence([seed, SCENARIO_IDS[scenario], n, m, 104729]))
+        perceived_claim = np.rint(state.max_claim * noise_rng.uniform(1 - CLAIM_NOISE, 1 + CLAIM_NOISE,
+                                                                       size=(n, m))).astype(np.int64)
     trace = {"available": [], "allocation": [], "waiting": []} if store_trace else None
 
     res = SequenceResult(scenario, n, m, seed, 0, "max_steps", ind, unsafe, dead, n_wait,
-                         req_units, look, in_spike, tightness=float(state.tightness().mean()))
+                         req_units, look, in_spike, ext, tightness=float(state.tightness().mean()))
     deadlocked = False
     dirty = False  # waiting set / pending changed since last detection run
     T = steps
@@ -190,6 +210,21 @@ def simulate(
             look[t] = banker.lookahead_fraction(state.available, state.allocation, need, active,
                                                 active & ~state.waiting)
             res.lookahead_time += time.perf_counter() - t0
+        if extras:
+            t0 = time.perf_counter()
+            if safe:
+                running = active & ~state.waiting
+                t1 = time.perf_counter()
+                ext[t, 0] = 1.0 - banker.safety_margin(state.available, state.allocation, need, active)
+                t2 = time.perf_counter()
+                ext[t, 1] = banker.lookahead_topk(state.available, state.allocation, need, active, running)
+                res.margin_time += t2 - t1
+                res.approx_time += time.perf_counter() - t2
+            noisy_need = np.clip(perceived_claim - state.allocation, 0, None)
+            noisy_need[state.finished] = 0
+            noisy = indicators.compute(state, noisy_need, req_units, t, window)
+            ext[t, 2], ext[t, 3] = noisy[1], noisy[2]
+            res.extras_time += time.perf_counter() - t0
         if store_trace:
             trace["available"].append(state.available.copy())
             trace["allocation"].append(state.allocation.copy())
@@ -207,6 +242,8 @@ def simulate(
         setattr(res, name, getattr(res, name)[:T])
     if look is not None:
         res.lookahead = look[:T]
+    if ext is not None:
+        res.extras = ext[:T]
     if store_trace:
         res.trace = {k: np.array(v) for k, v in trace.items()}
     res.runtime = time.perf_counter() - t_start

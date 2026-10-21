@@ -67,11 +67,12 @@ def _run_chunk(job: dict) -> dict:
         look = job["n"] <= job["look_max_n"] or (seed - job["split_start"]) < job["look_subsample"]
         trace = (seed - job["split_start"]) < job["trace_seeds"]
         r = simulate(job["scenario"], job["n"], job["m"], seed, job["steps"], job["window"],
-                     job["overrides"], lookahead=look, store_trace=trace)
+                     job["overrides"], lookahead=look, store_trace=trace, extras=job["extras"])
         if trace:
             np.savez_compressed(os.path.join(job["trace_dir"], f"{job['scenario']}_{job['n']}x{job['m']}_{seed}.npz"),
                                 unsafe=r.unsafe, deadlocked=r.deadlocked, indicators=r.indicators,
                                 lookahead=r.lookahead if r.lookahead is not None else np.zeros(0),
+                                extras=r.extras if r.extras is not None else np.zeros(0),
                                 in_spike=r.in_spike, **r.trace)
             r.trace = None
         results.append(r)
@@ -120,6 +121,7 @@ def main(argv=None):
                     "scenario": sc, "n": n, "m": m, "seeds": list(range(lo, min(lo + chunk, seeds.stop))),
                     "steps": cfg["steps"], "window": cfg["indicator_window"],
                     "overrides": (cfg.get("scenario_params") or {}).get(sc),
+                    "extras": bool(cfg.get("extras", False)),
                     "look_max_n": look.get("max_n_all_seeds", 0),
                     "look_subsample": lookahead_subsample(look, n),
                     "trace_seeds": cfg.get("store_full_trace_seeds", 0), "split_start": seeds.start,

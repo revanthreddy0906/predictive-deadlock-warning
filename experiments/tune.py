@@ -25,15 +25,16 @@ import numpy as np
 import pandas as pd
 
 from experiments.common import load_config, TUNING_SEEDS
-from experiments.evalcore import (COUNTS, H_MAX, KS, REFRACTORIES, THRESHOLDS, eval_counts, prepare,
-                                  random_rng, score_for, score_sources, tuning_configs)
-from pdw import io, warning
+from experiments.evalcore import (COUNTS, H_MAX, KS, REFRACTORIES, THRESHOLDS, eval_counts, load_models,
+                                  ml_tunes_on, prepare, random_rng, score_for, score_sources, tuning_configs)
+from pdw import io, learned, warning
 from pdw.metrics import summarize_counts
 
 
 def _grid_chunk(args):
-    path, gap = args
-    sources = score_sources()
+    path, gap, extras, models_path = args
+    models = load_models(models_path)
+    sources = score_sources(extras, models is not None)
     n_cfg = len(sources) * len(KS) * len(REFRACTORIES) * len(THRESHOLDS)
     counts = np.zeros((n_cfg, len(COUNTS)), np.int64)
     hist = np.zeros((n_cfg, H_MAX + 1), np.int64)
@@ -45,7 +46,9 @@ def _grid_chunk(args):
         eligible += int((~mask).sum())
         c = 0
         for m, wn, w in sources:
-            score = score_for(seq, m, w)
+            # learned models: thresholds tuned only on seeds they were not trained on
+            skip = m in learned.LEARNED and not ml_tunes_on(seq["seed"])
+            score = None if skip else score_for(seq, m, w, models)
             for k in KS:
                 for R in REFRACTORIES:
                     for th in THRESHOLDS:
@@ -89,14 +92,17 @@ def main(argv=None):
     assert cfg["split"] == "tuning", "tune only on the tuning split"
     gap = cfg.get("min_safe_gap", 5)
     files = io.chunk_files(args.run)
+    extras = bool(cfg.get("extras", False))
+    models_path = os.path.join(args.run, "ml_models.pkl")
+    models_path = models_path if os.path.exists(models_path) else None
 
     with ProcessPoolExecutor(args.workers) as ex:
-        parts = list(ex.map(_grid_chunk, [(f, gap) for f in files]))
+        parts = list(ex.map(_grid_chunk, [(f, gap, extras, models_path) for f in files]))
     counts = sum(p[0] for p in parts)
     hist = sum(p[1] for p in parts)
     eligible = sum(p[2] for p in parts)
 
-    grid = pd.DataFrame(tuning_configs())
+    grid = pd.DataFrame(tuning_configs(extras, models_path is not None))
     for j, name in enumerate(COUNTS):
         grid[name] = counts[:, j]
     m = summarize_counts(grid["true"], grid["false"], grid["events"], grid["captured"], grid["T"])
@@ -110,7 +116,7 @@ def main(argv=None):
         feas = df[df["feasible"]]
         best = (feas if len(feas) else df).sort_values(["f1", "precision"], ascending=False).iloc[0]
         out = {k: best[k] for k in ("method", "weights_name", "threshold", "k", "R")}
-        out["weights"] = list(best["weights"]) if best["method"] == "combined" else None
+        out["weights"] = list(best["weights"]) if best["method"] in ("combined", "combined_max") else None
         out.update({k: float(best[k]) for k in ("f1", "precision", "recall", "fa_per_1000", "lead_median")})
         out["alarms"] = int(best["alarms"])
         out["feasible"] = bool(len(feas) > 0)
@@ -135,7 +141,8 @@ def main(argv=None):
     out = {"best": best, "best_by_weights": best_by_weights,
            "objective": {"maximise": "f1", "fa_per_1000_max": args.fa_max, "lead_median_min": args.min_lead,
                          "H_max": H_MAX, "target": "unsafe (primary events)"},
-           "tuning_run": args.run, "tuning_config_hash": meta["config_hash"]}
+           "tuning_run": args.run, "tuning_config_hash": meta["config_hash"],
+           "extras": extras, "models": models_path}
     with open(os.path.join(args.run, "best_params.json"), "w") as f:
         json.dump(out, f, indent=2, default=lambda o: o.item() if hasattr(o, "item") else str(o))
 

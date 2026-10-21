@@ -18,6 +18,13 @@ Methods
     lookahead       fraction of running processes whose max feasible grant would make
                     the state unsafe (fix B3)
     random          Bernoulli(p) onsets on unmasked steps, same refractory rule (fix B2)
+
+Added for the full paper (need the simulator's `extras`):
+    combined_max      weighted maximum instead of weighted mean of the indicators
+    margin            1 - safety margin (scalar Finkel & Madduri-style distance to unsafe)
+    approx_lookahead  lookahead restricted to the 3 processes with the largest grants
+    logreg, gbt       learned models on the same signals (pdw.learned; scored in evalcore)
+`noisy=True` recomputes claim-based indicators from misdeclared claims (robustness).
 """
 
 from __future__ import annotations
@@ -28,6 +35,7 @@ from pdw.indicators import NAMES
 
 SINGLE = ("need_pressure", "contention", "waiting_ratio", "request_rate")
 METHODS = ("combined", *SINGLE, "availability", "lookahead", "random")
+EXTRA_METHODS = ("combined_max", "margin", "approx_lookahead")
 EQUAL_WEIGHTS = (1.0,) * len(NAMES)
 LEVELS = ((30, "LOW"), (60, "MEDIUM"), (80, "HIGH"), (100, "CRITICAL"))
 
@@ -47,10 +55,38 @@ def level(score: float) -> str:
     return "CRITICAL"
 
 
+def max_score(ind: np.ndarray, weights=EQUAL_WEIGHTS) -> np.ndarray:
+    """100 * max_i (w_i / max w) * ind_i: the most alarming indicator decides."""
+    w = np.asarray(weights, dtype=np.float64)
+    if (w < 0).any() or w.max() <= 0:
+        raise ValueError("weights must be non-negative with a positive entry")
+    return np.clip(100.0 * (np.asarray(ind, dtype=np.float64) * (w / w.max())).max(axis=1), 0.0, 100.0)
+
+
+def noisy_indicators(ind: np.ndarray, extras: np.ndarray) -> np.ndarray:
+    """Indicators with need_pressure and contention recomputed from misdeclared claims."""
+    out = np.array(ind, dtype=np.float64, copy=True)
+    out[:, NAMES.index("need_pressure")] = extras[:, 2]
+    out[:, NAMES.index("contention")] = extras[:, 3]
+    return out
+
+
 def method_score(method: str, ind: np.ndarray, lookahead: np.ndarray | None = None,
-                 weights=EQUAL_WEIGHTS) -> np.ndarray:
+                 weights=EQUAL_WEIGHTS, extras: np.ndarray | None = None,
+                 noisy: bool = False) -> np.ndarray:
+    if noisy:
+        if extras is None:
+            raise ValueError("noisy indicators need extras")
+        ind = noisy_indicators(ind, extras)
     if method == "combined":
         return risk_score(ind, weights)
+    if method == "combined_max":
+        return max_score(ind, weights)
+    if method in ("margin", "approx_lookahead"):
+        if extras is None:
+            raise ValueError(f"{method} needs the simulator's extras")
+        col = 0 if method == "margin" else 1
+        return 100.0 * np.nan_to_num(np.asarray(extras[:, col], dtype=np.float64), nan=0.0)
     if method in SINGLE:
         return 100.0 * np.asarray(ind[:, NAMES.index(method)], dtype=np.float64)
     if method == "availability":

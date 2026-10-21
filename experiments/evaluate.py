@@ -23,11 +23,14 @@ import numpy as np
 import pandas as pd
 
 from experiments.common import TEST_SEEDS
-from experiments.evalcore import COUNTS, THRESHOLDS, eval_counts, prepare, random_rng, score_for
-from pdw import io, metrics, warning
+from experiments.evalcore import (COUNTS, H_MAX, THRESHOLDS, eval_counts, load_models, prepare, random_rng,
+                                  score_for)
+from pdw import io, learned, metrics, warning
 
 H_LIST = (5, 10, 20, 50)
-SCORED = ("combined", *warning.SINGLE, "availability", "lookahead")
+ALL_SCORED = ("combined", *warning.SINGLE, "availability", "lookahead", *warning.EXTRA_METHODS, *learned.LEARNED)
+# Robustness: the tuned rule applied to indicators computed from misdeclared claims (+-20%).
+NOISY = ("combined", "combined_max", "need_pressure", "contention", *learned.LEARNED)
 
 
 def _row(base, method, target, H, r, keep_leads):
@@ -38,16 +41,18 @@ def _row(base, method, target, H, r, keep_leads):
 
 
 def _eval_chunk(args):
-    path, best, by_w, gap, reps = args
+    path, best, by_w, gap, reps, scored, models_path = args
+    models = load_models(models_path)
     rows, seqs = [], []
-    pr = {m: np.zeros((len(THRESHOLDS), 5), np.int64) for m in SCORED}  # true,false,events,captured,T
+    pr = {m: np.zeros((len(THRESHOLDS), 5), np.int64) for m in scored}  # true,false,events,captured,T
+    pr_leads = {m: np.zeros((len(THRESHOLDS), H_MAX + 1), np.int64) for m in scored}
     for raw in io.read_chunk(path):
         assert raw["seed"] in TEST_SEEDS, "evaluation must only see test seeds"
         seq = prepare(raw, gap)
         ev = seq["ev"]
         has_look = seq.get("lookahead") is not None
         base = {"scenario": seq["scenario"], "n": seq["n"], "m": seq["m"], "seed": seq["seed"],
-                "has_lookahead": has_look}
+                "has_lookahead": has_look, "has_extras": seq.get("extras") is not None}
 
         spike_idx = np.flatnonzero(seq["in_spike"])
         outcomes = [e[2] for e in ev.episodes]
@@ -58,9 +63,9 @@ def _eval_chunk(args):
                      "ep_recovered": outcomes.count("recovered"), "ep_deadlocked": outcomes.count("deadlocked"),
                      "ep_censored": outcomes.count("censored"), "tightness": seq["tightness"]})
 
-        for method in SCORED:
+        for method in scored:
             p = best[method]
-            score = score_for(seq, method, p.get("weights"))
+            score = score_for(seq, method, p.get("weights"), models)
             if score is None:
                 continue
             alarms = warning.alarm_onsets(score, p["threshold"], p["k"], p["R"], ev.mask)
@@ -74,6 +79,19 @@ def _eval_chunk(args):
             for i, th in enumerate(THRESHOLDS):  # PR sweep at the tuned k, R, weights
                 r = eval_counts(warning.alarm_onsets(score, th, p["k"], p["R"], ev.mask), ev.unsafe_events, seq)
                 pr[method][i] += [r["true"], r["false"], r["events"], r["captured"], r["T"]]
+                for lead in r["leads"].values():
+                    pr_leads[method][i, lead] += 1
+
+        # robustness: the same tuned rules fed indicators computed from misdeclared claims
+        for method in NOISY:
+            if method not in best:
+                continue
+            p = best[method]
+            score = score_for(seq, method, p.get("weights"), models, noisy=True)
+            if score is None:
+                continue
+            alarms = warning.alarm_onsets(score, p["threshold"], p["k"], p["R"], ev.mask)
+            rows.append(_row(base, method, "noisy_claims", 20, eval_counts(alarms, ev.unsafe_events, seq), True))
 
         # random baseline: average counts over `reps` draws; leads from the first draw
         rp = best["random"]
@@ -99,7 +117,7 @@ def _eval_chunk(args):
             alarms = warning.alarm_onsets(score, p["threshold"], p["k"], p["R"], ev.mask)
             rows.append(_row(base, f"combined[{wn}]", "ablation", 20,
                              eval_counts(alarms, ev.unsafe_events, seq), False))
-    return _compact(pd.DataFrame(rows)), pd.DataFrame(seqs), pr
+    return _compact(pd.DataFrame(rows)), pd.DataFrame(seqs), pr, pr_leads
 
 
 def _compact(df: pd.DataFrame) -> pd.DataFrame:
@@ -125,6 +143,10 @@ def _metrics_row(df: pd.DataFrame, ci: bool, B: int) -> dict:
     leads = [v for js in df["leads"] for v in json.loads(js).values()]
     out.update(metrics.lead_stats(leads))
     out["n_leads"] = len(leads)
+    out["alarms_per_1000"] = 1000.0 * float(s["alarms"]) / max(float(s["T"]), 1.0)
+    # NAB-style score needs every captured event's lead, i.e. rows that kept their leads
+    out["nab"] = metrics.nab_score(leads, float(s["false"]), float(s["events"])) \
+        if len(leads) == int(s["captured"]) else np.nan
     if ci:
         for k, (lo, hi) in metrics.bootstrap_ci(df, B=B).items():
             out[f"{k}_lo"], out[f"{k}_hi"] = lo, hi
@@ -153,11 +175,15 @@ def main(argv=None):
     params = json.load(open(args.params))
     best, by_w = params["best"], params["best_by_weights"]
     gap = meta["config"].get("min_safe_gap", 5)
+    models_path = params.get("models")
+    models_path = models_path if models_path and os.path.exists(models_path) else None
+    scored = [m for m in ALL_SCORED if m in best and (m not in learned.LEARNED or models_path)]
     out = os.path.join(args.run, "eval")
     os.makedirs(out, exist_ok=True)
 
     with ProcessPoolExecutor(args.workers) as ex:
-        parts = list(ex.map(_eval_chunk, [(f, best, by_w, gap, args.reps) for f in io.chunk_files(args.run)]))
+        parts = list(ex.map(_eval_chunk, [(f, best, by_w, gap, args.reps, scored, models_path)
+                                          for f in io.chunk_files(args.run)]))
     rows = pd.concat([p[0] for p in parts], ignore_index=True)
     for c in ("scenario", "method", "target"):  # concat of differing categories falls back to object
         rows[c] = rows[c].astype("category")
@@ -178,6 +204,27 @@ def main(argv=None):
         "ablation": table(rows[rows.target == "ablation"], ["method"]),
         "lookahead_subset": table(main_rows[main_rows.has_lookahead], ["method"], ci=True, B=args.bootstrap),
     }
+    noisy = rows[rows.target == "noisy_claims"]
+    if len(noisy):
+        clean = table(main_rows[main_rows.method.isin(list(NOISY))], ["method"])
+        dirty = table(noisy, ["method"])
+        tables["noisy_claims"] = clean[["method", "precision", "recall", "f1"]].merge(
+            dirty[["method", "precision", "recall", "f1"]], on="method", suffixes=("_true_claims", "_noisy_claims"))
+
+    # compute cost of each method, from the per-sequence timings of the simulation run
+    summ = pd.read_parquet(os.path.join(args.run, "summary.parquet"))
+    cost = []
+    sim_us = 1e6 * (summ.runtime - summ.lookahead_time - summ.get("extras_time", 0)).sum() / summ["T"].sum()
+    cost.append({"method": "simulation step (incl. 1 safety check + indicators)", "us_per_step": sim_us})
+    cost.append({"method": "safety check (Banker's)", "us_per_step": 1e6 * summ.safety_time.sum() / summ["T"].sum()})
+    for col, name in (("margin_time", "margin"), ("approx_time", "approx_lookahead"), ("lookahead_time", "lookahead")):
+        if col in summ and summ[col].sum() > 0:
+            sub = summ[summ[col] > 0]
+            for n, g in [("all", sub), *sub.groupby("n")]:
+                cost.append({"method": name, "n": n, "us_per_step": 1e6 * g[col].sum() / g["T"].sum()})
+    cost = pd.DataFrame(cost)
+    cost["relative_to_simulation_step"] = cost.us_per_step / sim_us
+    tables["cost"] = cost
 
     # paired lead times: combined vs every other method, on events both captured (F11)
     pairs = []
@@ -217,12 +264,14 @@ def main(argv=None):
     }])
 
     pr = []
-    for method in SCORED:
+    for method in scored:
         tot = sum(p[2][method] for p in parts)
+        lh = sum(p[3][method] for p in parts)
         m = metrics.summarize_counts(tot[:, 0], tot[:, 1], tot[:, 2], tot[:, 3], tot[:, 4])
         for i, th in enumerate(THRESHOLDS):
+            med = float(np.median(np.repeat(np.arange(lh.shape[1]), lh[i]))) if lh[i].sum() else np.nan
             pr.append({"method": method, "threshold": th, **{k: float(v[i]) for k, v in m.items()},
-                       "tuned": th == best[method]["threshold"]})
+                       "lead_median": med, "tuned": th == best[method]["threshold"]})
     tables["pr_curves"] = pd.DataFrame(pr)
 
     lead_rows = [{"method": r.method, "scenario": r.scenario, "lead": v}

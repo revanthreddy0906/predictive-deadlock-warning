@@ -12,3 +12,4 @@ results_ec2/
 *.bundle
 paper/*.log
 paper/*.aux
+results_ec2_c/

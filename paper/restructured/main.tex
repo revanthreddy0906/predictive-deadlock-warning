@@ -51,7 +51,7 @@ A simple estimate suggests the problem is easy. Unsafety is a deterministic func
 
 Our thesis is that, in these configurations, cheap indicators anticipate unsafe states about ten steps ahead with moderate precision; that non-linear combinations of the same signals do substantially better; and that a safety check with a fixed number of Banker evaluations per step comes within 0.03 F1 of exact lookahead at a small fraction of its cost for large systems, but warns later than the cheap signals. Observations that we cannot explain are reported in Section~\ref{sec:anomalies}.
 
-The hypotheses below were formulated after two exploratory campaigns and were not pre-registered; Section~\ref{sec:stats} lists the resulting deviations.
+The hypotheses below were formulated after two earlier, exploratory runs (Table~\ref{tab:campaigns}) and were not pre-registered; Section~\ref{sec:stats} lists the resulting deviations.
 \begin{itemize}
 \item \textbf{H1} (advance warning): a rule-based indicator score raises alarms before unsafe onsets with F1 above a matched-rate random baseline and a free-resource threshold (Section~\ref{sec:res-accuracy}).
 \item \textbf{H2} (equivalence at lower cost): the safety margin, which uses a fixed seven safety checks per step, is equivalent in F1 to exact lookahead within $\pm\delta$, $\delta=0.05$ (Section~\ref{sec:res-frontier}).
@@ -163,22 +163,22 @@ Robustness & Insensitivity to unbiased $\pm$20\% per-entry claim error & Robustn
 \section{Implementation and Methodology}\label{sec:method}
 
 \subsection{Implementation}\label{sec:impl}
-The simulator is written in Python with a NumPy-vectorised safety check~\cite{Harris2020} that finishes every process that fits in each pass; it agrees with the textbook loop on 2,000 random states, as does deadlock detection, and both reproduce the textbook examples~\cite{Silberschatz2018}. Detection is event-driven: it reruns only when the waiting set or a pending request changes, which we verified against every-step detection. Invariants (conservation of units, allocation $\le$ claim, pending $\le$ need, finished processes hold nothing) are asserted in a debug mode. The state-based baselines draw on a separate random stream, so the simulated workload is identical with or without them. The 134 automated tests cover every row of our edge-case matrix. The record campaign used Python 3.12.3, NumPy 2.4.6, pandas 3.0.6, PyArrow 25.0.1 and scikit-learn 1.9.1. The analysis scripts generate every number and table in this paper.
+The simulator is written in Python with a NumPy-vectorised safety check~\cite{Harris2020} that finishes every process that fits in each pass; it agrees with the textbook loop on 2,000 random states, as does deadlock detection, and both reproduce the textbook examples~\cite{Silberschatz2018}. Detection is event-driven: it reruns only when the waiting set or a pending request changes, which we verified against every-step detection. Invariants (conservation of units, allocation $\le$ claim, pending $\le$ need, finished processes hold nothing) are asserted in a debug mode. The state-based baselines draw on a separate random stream, so the simulated workload is identical with or without them. The 134 automated tests cover every row of our edge-case matrix. The main run used Python 3.12.3, NumPy 2.4.6, pandas 3.0.6, PyArrow 25.0.1 and scikit-learn 1.9.1. The analysis scripts generate every number and table in this paper.
 
 \subsection{Testbed and Workloads}\label{sec:testbed}
-Three campaigns were run (Table~\ref{tab:campaigns}); their results are never pooled, and this paper reports the third unless stated otherwise. Each workload ran at five sizes (10--200 processes, 5--20 resource types) with \NSeedsPerCell{} test seeds and \NSeedsTune{} tuning seeds per cell (Table~\ref{tab:setup}); the tuning seed range (0--99,999) and test seed range (from 100,000) are disjoint, which the code asserts. The record campaign ran headless on one AWS EC2 \Machine{} instance (\CPUs{} vCPUs, \RamGB{} GB, region ap-south-2, Ubuntu 24.04) with 32 worker processes and one BLAS/OpenMP thread each; the whole pipeline took \AwsWall{} and about \$\AwsCost{}. Runs record their configuration hash, commit (\texttt{\GitCommit}, with the fix of \texttt{173a323}) and machine, and resume from chunked Parquet output.
+We ran the pipeline three times (Table~\ref{tab:campaigns}): a pilot on a laptop to check that it worked end to end, an exploratory cloud run with a smaller set of methods, and the main run. Every result in this paper comes from the main run; the earlier runs only shaped the hypotheses and are never pooled with it. Each workload ran at five sizes (10--200 processes, 5--20 resource types) with \NSeedsPerCell{} test seeds and \NSeedsTune{} tuning seeds per cell (Table~\ref{tab:setup}); the tuning seed range (0--99,999) and test seed range (from 100,000) are disjoint, which the code asserts. The main run ran headless on one AWS EC2 \Machine{} instance (\CPUs{} vCPUs, \RamGB{} GB, region ap-south-2, Ubuntu 24.04) with 32 worker processes and one BLAS/OpenMP thread each; the whole pipeline took \AwsWall{} and about \$\AwsCost{}. Runs record their configuration hash, commit (\texttt{\GitCommit}, with the fix of \texttt{173a323}) and machine, and resume from chunked Parquet output.
 
 \begin{table}[t]
 \centering\footnotesize
-\caption{CAMPAIGNS. RESULTS ARE NEVER POOLED ACROSS CAMPAIGNS.}
+\caption{EXPERIMENTAL RUNS. ONLY RUN 3 IS REPORTED; RESULTS ARE NEVER POOLED ACROSS RUNS.}
 \label{tab:campaigns}
-\begin{tabular}{>{\raggedright\arraybackslash}p{1.6cm}rrr>{\raggedright\arraybackslash}p{1.7cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{1.25cm}>{\raggedright\arraybackslash}p{1.5cm}rr>{\raggedright\arraybackslash}p{2.2cm}}
 \toprule
-Campaign & Sequences & Steps & Cost & Role \\
+Run & Machine & Sequences & Steps & Purpose \\
 \midrule
-Mac dry run & 48,000 & 55.7\,M & -- & pipeline check (exploratory) \\
-EC2 Option B & 300,000 & 676.2\,M & \$4.11 & first cloud run (exploratory) \\
-EC2 full paper & 195,000 & 439.6\,M & \$8.39 & results of record \\
+1. Pilot & laptop & 48,000 & 55.7\,M & pipeline check; not reported \\
+2. Exploratory & AWS EC2, 32 vCPUs & 300,000 & 676.2\,M & fewer methods; not reported \\
+3. Main & AWS EC2, 32 vCPUs & 195,000 & 439.6\,M & all 12 methods; all results \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -192,7 +192,7 @@ An alarm at step $a$ is true if an onset falls in $[a{+}1,a{+}H_{\max}]$, $H_{\m
 
 \textbf{Equivalence.} H2 is tested with two one-sided tests on the paired batch-level F1 difference against $\pm\delta$, $\delta=0.05$: equivalent if the 90\% interval of the mean difference lies inside $(-\delta,\delta)$, otherwise inconclusive. We also report the smallest $\delta$ at which equivalence would hold.
 
-\textbf{Deviations and post-hoc choices.} (1) The tuning split was reduced from 10,000 to 3,000 seeds per cell after a pilot projected the run past its time limit. (2) Tuning, evaluation and figures were re-run after two bugs found mid-run (thread oversubscription in the learned-model workers; a NaN in the prior correction of learned scores); the simulation data were unaffected. (3) The spike workload was redesigned after calibration showed the first design produced no unsafe states. (4) The paired lead-time comparison, the NAB score, the per-size table, the batch analysis, the common-subset deadlock table and the equivalence test were chosen after the record campaign's main results were seen. (5) H1--H3 and $\delta=0.05$ were written after the point estimates of the exploratory campaigns and of the record campaign were known. No analysis was pre-registered; all results should be read as exploratory.
+\textbf{Deviations and post-hoc choices.} (1) The tuning split was reduced from 10,000 to 3,000 seeds per cell after a pilot projected the run past its time limit. (2) Tuning, evaluation and figures were re-run after two bugs found mid-run (thread oversubscription in the learned-model workers; a NaN in the prior correction of learned scores); the simulation data were unaffected. (3) The spike workload was redesigned after calibration showed the first design produced no unsafe states. (4) The paired lead-time comparison, the NAB score, the per-size table, the batch analysis, the common-subset deadlock table and the equivalence test were chosen after the main run's headline results were seen. (5) H1--H3 and $\delta=0.05$ were written after the point estimates of all three runs were known. No analysis was pre-registered; all results should be read as exploratory.
 
 % =============================================================================
 \section{Results}\label{sec:results}
@@ -423,7 +423,7 @@ Six observations are not explained by anything above.
 
 % =============================================================================
 \section{Discussion and Conclusion}\label{sec:conclusion}
-Three things came out of the measurements that the simple estimate of Section~\ref{sec:intro} could not have told us. First, warning quality depended on the regime: cheap signals did well when danger built up abruptly and poorly when it built up gradually, and most methods degraded in larger systems, while waiting ratio improved. Second, two first expectations were wrong in part: averaging indicators did worse than the strongest indicator alone, and an exploratory run had suggested that exact lookahead warns much later than the cheap score (median 3 versus 7 steps), whereas on the record campaign the paired leads were 4 and 5. Third, the cheap signals hold more than a weighted sum extracts---boosted trees on the same features reached 0.48 against 0.28---and the ranking of methods depends on the population and the target: on identical sequences, the rule-based score anticipated deadlock onsets better than any state-based check.
+Three things came out of the measurements that the simple estimate of Section~\ref{sec:intro} could not have told us. First, warning quality depended on the regime: cheap signals did well when danger built up abruptly and poorly when it built up gradually, and most methods degraded in larger systems, while waiting ratio improved. Second, two first expectations were wrong in part: averaging indicators did worse than the strongest indicator alone, and the pilot run had suggested that exact lookahead warns much later than the cheap score (median 3 versus 7 steps), whereas in the main run the paired leads were 4 and 5. Third, the cheap signals hold more than a weighted sum extracts---boosted trees on the same features reached 0.48 against 0.28---and the ranking of methods depends on the population and the target: on identical sequences, the rule-based score anticipated deadlock onsets better than any state-based check.
 
 For a practitioner, the measurements suggest a procedure: run a cheap score continuously and, when it crosses its threshold, evaluate the safety margin, which costs a fixed seven safety checks per step and in these configurations comes within 0.03 F1 of exact lookahead; for small systems, exact lookahead itself is affordable. The cheap score supplies the earlier warning and the state check the precision. This procedure follows from the components' measurements; it was not tested end to end.
 
@@ -432,7 +432,7 @@ For designers of warning methods, the lesson is to compare methods on identical 
 These results come from one simulator, synthetic workloads with declared claims, one implementation and one cloud instance. They do not establish behaviour on real allocators, under biased claims or in distributed settings.
 
 \section*{Data and Code Availability}
-The simulator, configurations, analysis scripts (including \texttt{analysis/batches.py} for the batch, equivalence and common-subset analyses), per-sequence evaluation rows and a sample of per-step traces are in the authors' repository and are available from the authors on request. Configurations record seeds, configuration hashes and commit identifiers (exploratory cloud campaign \texttt{d3de8e5}; record campaign \texttt{328caf6} with the fix of \texttt{173a323}).
+The simulator, configurations, analysis scripts (including \texttt{analysis/batches.py} for the batch, equivalence and common-subset analyses), per-sequence evaluation rows and a sample of per-step traces are in the authors' repository and are available from the authors on request. Configurations record seeds, configuration hashes and commit identifiers (exploratory run \texttt{d3de8e5}; main run \texttt{328caf6} with the fix of \texttt{173a323}).
 
 \bibliographystyle{IEEEtran}
 \bibliography{../refs}

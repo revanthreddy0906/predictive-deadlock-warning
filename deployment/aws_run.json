@@ -1,10 +1,11 @@
 {
   "Instance": "1 x c7i.8xlarge (32 vCPU, 61 GB RAM), Ubuntu 24.04, region ap-south-2 (Hyderabad)",
-  "Launched (UTC)": "2026-10-08 16:57",
-  "Terminated (UTC)": "2026-10-08 19:49",
-  "Instance hours": "2.86",
-  "Pipeline wall time": "2 h 43 min (tests, smoke, calibration, 300,000 simulations, tuning, evaluation, scaling, tables, figures)",
-  "Estimated cost": "about $4.11 (compute $4.08 at $1.428/h, 40 GB gp3 disk $0.01, public IPv4 $0.01); paid from AWS credits",
+  "Launched (UTC)": "2026-10-21 05:41",
+  "Terminated (UTC)": "2026-10-21 11:31",
+  "Instance hours": "5.84",
+  "Pipeline wall time": "5 h 40 min (incl. a 42-min stall from thread oversubscription, fixed and resumed)",
+  "Estimated cost": "about $8.39 (compute $8.33 at $1.428/h, 40 GB gp3 disk $0.03, public IPv4 $0.03); paid from AWS credits",
+  "Code": "commit 328caf6; tuning, evaluation and figures re-run with the learned-score NaN fix of commit 173a323",
   "Cost guards": "10-hour OS stop timer; self-stop 45 min after the pipeline; idle-CPU (<2% for 30 min) stop alarm; SSH from one IP only; all resources tagged and deleted",
   "Clean-up audit": "no instances, volumes, Elastic IPs, snapshots, security group, alarm or key pair left (deployment/aws_audit.sh: AUDIT CLEAN)"
 }

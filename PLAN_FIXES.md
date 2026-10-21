@@ -253,3 +253,32 @@ Processes really do request up to their maximum claims, so Banker's worst case i
   - on jointly caught events lookahead's lead is similar to combined's (EC2: 4 vs 5 steps; Mac: 3 vs 7).
 
   The paper and report state the EC2 results. The trade-off is framed as **accuracy vs compute cost**, not timing.
+
+---
+
+## I. Full-paper run (Oct 21, AWS EC2 c7i.8xlarge)
+
+- **New baselines:**
+  - weighted-max combination;
+  - logistic regression and gradient-boosted trees: trained on even tuning seeds, thresholds tuned on odd ones, prior-corrected;
+  - scalar safety margin, following Finkel & Madduri;
+  - top-3 approximate lookahead.
+
+  New measurements: indicators from claims misdeclared by ±20%, NAB-style score, alarm burden, per-method compute cost, precision vs lead-time sweep.
+- **Scale and time gate:** the pilot projected about 8 h for 10,000 tuning seeds per cell, so tuning used 3,000 seeds per cell (`configs/c_tuning_small.yaml`). Test stayed at 10,000 per cell. Total: 195,000 sequences, 439.6M steps.
+- **Two bugs found during the run, fixed and committed:**
+  - scikit-learn/OpenMP thread oversubscription (about 2,350 threads on 32 vCPUs); now pinned to one thread per worker;
+  - NaN in the prior correction when a float32 probability rounds to 1.0; now float64 log-odds.
+
+  Tuning, evaluation and figures were re-run after both fixes. The simulation data was unaffected.
+- **Results** (test split, H_max = 20):
+
+  | Method | F1 | Note |
+  |---|---|---|
+  | combined | 0.28 | identical to the Oct 8 run (same test seeds, same tuned parameters) |
+  | contention | 0.34 | |
+  | boosted trees | 0.48 | |
+  | logistic regression | 0.31 | |
+
+  On the lookahead subset: safety margin 0.72, top-3 lookahead 0.69, exact lookahead 0.745. Exact lookahead costs 43× a simulation step at n=200; the margin 1.7×. Misdeclared claims changed F1 by at most 0.005.
+- **Cost:** about $8.39 (5.84 instance-hours). Teardown and audit came back clean.

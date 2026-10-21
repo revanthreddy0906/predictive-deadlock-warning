@@ -5,16 +5,21 @@
 \label{tab:scenario}
 \begin{tabular}{lrrr}
 \toprule
-method & deadlock\_prone & spike & normal \\
+method & normal & spike & deadlock\_prone \\
 \midrule
-combined & 0.23 & 0.42 & 0.22 \\
-need\_pressure & 0.01 & 0.34 & 0.06 \\
-contention & 0.22 & 0.49 & 0.21 \\
-waiting\_ratio & 0.31 & 0.03 & 0.29 \\
-request\_rate & 0.00 & 0.23 & 0.00 \\
-availability & 0.05 & 0.34 & 0.10 \\
-lookahead & 0.69 & 0.83 & 0.66 \\
-random & 0.01 & 0.01 & 0.00 \\
+combined (ours) & 0.22 & 0.42 & 0.23 \\
+combined, max & 0.21 & 0.49 & 0.22 \\
+need pressure & 0.06 & 0.34 & 0.01 \\
+contention & 0.21 & 0.49 & 0.22 \\
+waiting ratio & 0.29 & 0.03 & 0.31 \\
+request rate & 0.00 & 0.23 & 0.00 \\
+availability & 0.10 & 0.34 & 0.05 \\
+logistic regr. & 0.22 & 0.44 & 0.23 \\
+boosted trees & 0.36 & 0.58 & 0.43 \\
+safety margin & 0.55 & 0.78 & 0.54 \\
+top-3 lookahead & 0.45 & 0.80 & 0.44 \\
+exact lookahead & 0.66 & 0.83 & 0.69 \\
+random & 0.00 & 0.01 & 0.01 \\
 \bottomrule
 \end{tabular}
 \end{table}

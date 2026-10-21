@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Measured compute per step (test split). A simulation step includes one safety check and the indicators; learned models add a few vector operations.}
+\label{tab:cost}
+\begin{tabular}{lrrr}
+\toprule
+computation & processes & $\mu$s/step & $\times$ simulation step \\
+\midrule
+simulation step & all & 289.18 & 1.00 \\
+one safety check & all & 59.89 & 0.21 \\
+safety margin & all & 417.28 & 1.44 \\
+safety margin & 200 & 479.30 & 1.66 \\
+top-3 lookahead & all & 231.46 & 0.80 \\
+top-3 lookahead & 200 & 264.00 & 0.91 \\
+exact lookahead & all & 1850.09 & 6.40 \\
+exact lookahead & 200 & 12565.63 & 43.45 \\
+\bottomrule
+\end{tabular}
+\end{table}

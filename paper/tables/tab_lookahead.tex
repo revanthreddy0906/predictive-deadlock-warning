@@ -7,13 +7,18 @@
 \toprule
 method & precision & recall & F1 & lead med. \\
 \midrule
-combined & 0.56 & 0.37 & 0.44 [0.44, 0.45] & 5 \\
-need\_pressure & 0.65 & 0.11 & 0.18 [0.18, 0.19] & 4 \\
+combined (ours) & 0.56 & 0.37 & 0.44 [0.44, 0.45] & 5 \\
+combined, max & 0.46 & 0.59 & 0.51 [0.51, 0.52] & 6 \\
+need pressure & 0.65 & 0.11 & 0.18 [0.18, 0.19] & 4 \\
 contention & 0.46 & 0.59 & 0.51 [0.51, 0.52] & 6 \\
-waiting\_ratio & 0.32 & 0.09 & 0.14 [0.14, 0.15] & 4 \\
-request\_rate & 0.44 & 0.27 & 0.33 [0.33, 0.34] & 8 \\
+waiting ratio & 0.32 & 0.09 & 0.14 [0.14, 0.15] & 4 \\
+request rate & 0.44 & 0.27 & 0.33 [0.33, 0.34] & 8 \\
 availability & 0.48 & 0.22 & 0.30 [0.29, 0.30] & 4 \\
-lookahead & 0.69 & 0.81 & 0.74 [0.74, 0.75] & 4 \\
+logistic regr. & 0.23 & 0.79 & 0.36 [0.36, 0.37] & 12 \\
+boosted trees & 0.40 & 0.81 & 0.54 [0.53, 0.54] & 10 \\
+safety margin & 0.68 & 0.77 & 0.72 [0.71, 0.72] & 4 \\
+top-3 lookahead & 0.63 & 0.77 & 0.69 [0.69, 0.70] & 5 \\
+exact lookahead & 0.69 & 0.81 & 0.74 [0.74, 0.75] & 4 \\
 random & 0.03 & 0.01 & 0.01 [0.01, 0.01] & 9 \\
 \bottomrule
 \end{tabular}

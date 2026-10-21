@@ -12,10 +12,13 @@ import os
 
 import pandas as pd
 
-ORDER = ["combined", "contention", "need_pressure", "waiting_ratio", "request_rate", "availability", "lookahead", "random"]
+ORDER = ["combined", "contention", "need_pressure", "waiting_ratio", "request_rate", "availability",
+         "logreg", "gbt", "margin", "approx_lookahead", "lookahead", "random"]
 NICE = {"combined": "Combined score (ours)", "need_pressure": "Need pressure", "contention": "Contention",
         "waiting_ratio": "Waiting ratio", "request_rate": "Request rate", "availability": "Availability (free-resource rule)",
-        "lookahead": "Lookahead (exact, expensive)", "random": "Random alarms (chance)"}
+        "lookahead": "Exact lookahead (expensive)", "random": "Random alarms (chance)",
+        "logreg": "Logistic regression (ML)", "gbt": "Gradient-boosted trees (ML)",
+        "margin": "Safety margin", "approx_lookahead": "Top-3 lookahead", "combined_max": "Combined, max"}
 
 
 def f2(x):
@@ -84,6 +87,21 @@ def main(argv=None):
     dl50 = dl[dl.H_max == 50].set_index("method")
     dl_rows = [{"Method": NICE[m], "F1 (H=20)": f2(dl20.loc[m, "f1"]), "F1 (H=50)": f2(dl50.loc[m, "f1"])}
                for m in ORDER if m in dl20.index]
+    cost_rows = []
+    _cost_path = os.path.join(ev, "cost.csv")
+    if os.path.exists(_cost_path):
+        cc = pd.read_csv(_cost_path)
+        cc["n"] = cc["n"].astype(str).str.replace(".0", "", regex=False).replace({"nan": "all"})
+        for r in cc.itertuples():
+            if r.n in ("all", str(int(meta["config"]["sizes"][-1]["processes"]))):
+                cost_rows.append({"Computation": NICE.get(r.method, r.method), "Processes": r.n,
+                                  "× one simulation step": f"{r.relative_to_simulation_step:.2f}"})
+    robust_rows = []
+    nc_path = os.path.join(ev, "noisy_claims.csv")
+    if os.path.exists(nc_path):
+        for r in pd.read_csv(nc_path).itertuples():
+            robust_rows.append({"Method": NICE.get(r.method, r.method), "F1, true claims": f2(r.f1_true_claims),
+                                "F1, claims ±20%": f2(r.f1_noisy_claims)})
     abl_rows = [{"Variant": r.method.replace("combined[equal]", "all five indicators, equal weights")
                  .replace("combined[drop_", "without ").rstrip("]").replace("_", " "), "F1": f2(r.f1)}
                 for r in abl.itertuples()]
@@ -120,6 +138,17 @@ def main(argv=None):
         look_n = int(lkr.n.max())
         big = lkr[lkr.n == look_n]
         look_cost = big.lookahead_time.sum() / (big.runtime - big.lookahead_time).sum()
+    margin_cost = float("nan")
+    cost_path = os.path.join(ev, "cost.csv")
+    cost = pd.read_csv(cost_path) if os.path.exists(cost_path) else None
+    if cost is not None:
+        nn = cost.n.astype(str).str.replace(".0", "", regex=False)
+        mc = cost[(cost.method == "margin") & (nn == str(look_n))]
+        if len(mc):
+            margin_cost = float(mc.relative_to_simulation_step.iloc[0])
+        lc = cost[(cost.method == "lookahead") & (nn == str(look_n))]
+        if len(lc):  # same basis as the paper: relative to a plain simulation step
+            look_cost = float(lc.relative_to_simulation_step.iloc[0])
     lk = sub.loc["lookahead"]
     cs = sub.loc["combined"]
     pl = pairs.loc["lookahead"]
@@ -158,14 +187,18 @@ Settings were tuned on {tmeta['totals']['sequences']:,} sequences and all report
 2. **Contention is the single most useful signal** (F1 = {f2(ov.loc['contention', 'f1'])} on its own). Averaging in
    weaker signals dilutes it: the tuner's best combination doubled contention's weight
    ("{best['combined']['weights_name']}").
-3. **An exact one-step lookahead check is much more accurate** (F1 = {f2(lk.f1)} vs {f2(cs.f1)} for our score on
-   the same sequences), with **similar lead times** on the events both caught (median {pl.other_median:.0f} steps for lookahead,
-   {pl.combined_median:.0f} for ours), **but it is expensive**: one extra safety check per running process per step,
-   {look_cost:.0f}× the computation of the whole simulation at {look_n} processes. Cheap-and-moderate versus
-   exact-and-costly is the central trade-off.
-4. **Sudden bursts are easiest to predict, slow build-ups hardest** (F1 {f2(ps[(ps.method == 'combined') & (ps.scenario == 'spike')].f1.iloc[0])}
+3. **Machine learning on the same cheap signals helps a lot.** Gradient-boosted trees reached F1 =
+   {f2(ov.loc['gbt', 'f1'])} (vs {f2(c.f1)} for our rule), while logistic regression gained little
+   ({f2(ov.loc['logreg', 'f1'])}): the signals matter *in combination*, in ways a simple weighted sum cannot
+   capture. The trade-off is explainability.
+4. **Checking the safety boundary directly is most accurate, and does not have to be expensive.** On the runs
+   where every method was computed, exact lookahead scored {f2(lk.f1)} but costs {look_cost:.0f}× a whole
+   simulation step at {look_n} processes; a *safety margin* (how much free resource could disappear before the
+   state turns unsafe) scored {f2(sub.loc['margin', 'f1'])} for only about {margin_cost:.1f}× the cost. Both warn
+   later than the cheap signals.
+5. **Sudden bursts are easiest to predict, slow build-ups hardest** (F1 {f2(ps[(ps.method == 'combined') & (ps.scenario == 'spike')].f1.iloc[0])}
    for spikes vs {f2(ps[(ps.method == 'combined') & (ps.scenario == 'normal')].f1.iloc[0])} for normal workloads).
-5. **"Unsafe" almost always became "deadlock"** in our model ({ep.loc['spike', 'deadlocked_frac'] * 100:.0f}% of
+6. **"Unsafe" almost always became "deadlock"** in our model ({ep.loc['spike', 'deadlocked_frac'] * 100:.0f}% of
    unsafe episodes for spikes, {ep.loc['normal', 'deadlocked_frac'] * 100:.0f}% for normal workloads), because
    processes really do end up requesting their full declared claims.
 
@@ -288,7 +321,21 @@ Removing contention or request rate hurts the equal-weight combination most; rem
 Adding weak signals to a strong one dilutes it, which is why the tuner's best combination doubled contention's
 weight.
 
-## 6.4 By scenario (F1)
+## 6.4 Machine learning, the safety margin and the cost of being exact
+![Accuracy against compute: cheap signals (left) vs checks that test the safety boundary directly (right).](figures/fig9_cost_frontier.png){{ width=80% }}
+
+{table(pd.DataFrame(cost_rows))}
+
+The learned models and the five signals cost almost nothing per step. The safety margin and top-3 lookahead
+use a fixed handful of safety checks, so their cost barely grows with system size, while exact lookahead runs
+one check per process and becomes very expensive for large systems.
+
+**Wrong maximum claims.** When the signals were computed from claims that were off by up to ±20%, F1 changed by
+less than half a percentage point for every method, so the method does not need perfectly known claims.
+
+{table(pd.DataFrame(robust_rows))}
+
+## 6.5 By scenario (F1)
 {table(pd.DataFrame(scen_rows))}
 
 ![F1 per scenario with 95% confidence intervals.](figures/fig4_per_scenario_f1.png){{ width=100% }}
@@ -298,7 +345,7 @@ steps after the burst begins (only {spike.event_before_spike * 100:.1f}% before 
 before the line is crossed; there, waiting ratio alone does better than the combination. Contention's overall lead
 comes mainly from spikes.
 
-## 6.5 Unsafe versus deadlock
+## 6.6 Unsafe versus deadlock
 {table(ep.reset_index()[["scenario", "ep_recovered", "ep_deadlocked", "deadlocked_frac"]].assign(deadlocked_frac=lambda d: (100 * d.deadlocked_frac).round(0).astype(int).astype(str) + "%").rename(columns={"scenario": "Scenario", "ep_recovered": "Recovered", "ep_deadlocked": "Became deadlock", "deadlocked_frac": "Deadlock share"}))}
 
 Predicting the deadlock itself (alarms allowed while already unsafe):
@@ -311,11 +358,11 @@ With a 20-step window, waiting ratio is the best deadlock predictor (F1 {f2(dl20
 blocked processes pile up as a deadlock forms. With a 50-step window lookahead leads
 ({f2(dl50.loc['lookahead', 'f1'])}, on its subset of runs).
 
-## 6.6 Warning window
+## 6.7 Warning window
 With the same alarms, a wider window counts more alarms as correct: combined F1 = {f2(h.get(5))} (5 steps),
 {f2(h.get(10))} (10), {f2(h.get(20))} (20), {f2(h.get(50))} (50).
 
-## 6.7 Speed
+## 6.8 Speed
 {sc_text}
 
 ![Time per Banker's safety check as the number of processes grows (log–log).](figures/fig7_scaling.png){{ width=100% }}
@@ -351,7 +398,8 @@ AWS launch, monitoring and clean-up scripts are in `deployment/` (`aws_launch.sh
 4. Correctness: safe never coexists with deadlock; unsafe can recover; lead time 0 is a miss; long alarms count
    once; alarms at the end of a cut-off run are excluded.
 5. Results: F1 {f2(c.f1)} vs {f2(ov.loc['random', 'f1'])} random and {f2(ov.loc['availability', 'f1'])} free-resource rule;
-   median {c.lead_median:.0f} steps of warning; lookahead {f2(lk.f1)} but {look_cost:.0f}× more compute.
+   median {c.lead_median:.0f} steps of warning; boosted trees on the same signals {f2(ov.loc['gbt', 'f1'])};
+   safety margin {f2(sub.loc['margin', 'f1'])} at a fraction of exact lookahead's cost ({f2(lk.f1)}, {look_cost:.0f}×).
 6. Scale: {n_seq:,} sequences, {n_steps / 1e6:.0f} million safety checks, run on AWS EC2.
 7. Limitations and future work: real traces, learned models, two-stage warning (cheap score first, lookahead only
    when the score is high).

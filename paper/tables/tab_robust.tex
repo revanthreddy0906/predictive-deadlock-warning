@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Robustness: the same tuned rules when need pressure and contention are computed from maximum claims misdeclared by up to $\pm$20\% (ground truth uses the true claims).}
+\label{tab:robust}
+\begin{tabular}{lrrr}
+\toprule
+method & F1, true claims & F1, claims $\pm$20\% & change \\
+\midrule
+combined (ours) & 0.280 & 0.280 & +0.000 \\
+combined, max & 0.338 & 0.337 & -0.001 \\
+need pressure & 0.190 & 0.194 & +0.004 \\
+contention & 0.338 & 0.337 & -0.001 \\
+logistic regr. & 0.310 & 0.311 & +0.002 \\
+boosted trees & 0.477 & 0.476 & -0.001 \\
+\bottomrule
+\end{tabular}
+\end{table}

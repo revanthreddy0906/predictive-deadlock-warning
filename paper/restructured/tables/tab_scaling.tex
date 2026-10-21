@@ -1,0 +1,27 @@
+\begin{table}[!htb]
+\centering
+\footnotesize
+\caption{TIME PER BANKER'S SAFETY CHECK ON RANDOM VALID STATES: OUR VECTORISED NUMPY VERSION AGAINST THE TEXTBOOK LOOP.}
+\label{tab:scaling}
+\begin{tabular}{rrrrr}
+\toprule
+$n$ & $m$ & Vectorised ($\mu$s) & Textbook ($\mu$s) & Speed-up \\
+\midrule
+10 & 5 & 7.1 & 9.7 & 1.4 \\
+10 & 10 & 6.9 & 9.4 & 1.4 \\
+10 & 20 & 6.9 & 10.5 & 1.5 \\
+25 & 5 & 9.0 & 19.5 & 2.2 \\
+25 & 10 & 7.4 & 17.6 & 2.4 \\
+25 & 20 & 7.4 & 17.3 & 2.3 \\
+50 & 5 & 9.1 & 29.6 & 3.3 \\
+50 & 10 & 8.1 & 28.4 & 3.5 \\
+50 & 20 & 9.0 & 28.6 & 3.2 \\
+100 & 5 & 12.1 & 60.8 & 5.0 \\
+100 & 10 & 9.9 & 51.9 & 5.3 \\
+100 & 20 & 11.2 & 54.3 & 4.9 \\
+200 & 5 & 17.8 & 138.0 & 7.7 \\
+200 & 10 & 13.7 & 103.3 & 7.6 \\
+200 & 20 & 15.6 & 99.7 & 6.4 \\
+\bottomrule
+\end{tabular}
+\end{table}

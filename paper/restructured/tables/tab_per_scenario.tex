@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{F1 PER WORKLOAD (UNSAFE TARGET, 20-STEP HORIZON).}
+\label{tab:scenario}
+\begin{tabular}{lrrr}
+\toprule
+Method & Normal & Spike & Deadlock-prone \\
+\midrule
+Rule-based (ours) & 0.22 & 0.42 & 0.23 \\
+Rule-based, max & 0.21 & 0.49 & 0.22 \\
+Need pressure & 0.06 & 0.34 & 0.01 \\
+Contention & 0.21 & 0.49 & 0.22 \\
+Waiting ratio & 0.29 & 0.03 & 0.31 \\
+Request rate & 0.00 & 0.23 & 0.00 \\
+Availability & 0.10 & 0.34 & 0.05 \\
+Logistic regression & 0.22 & 0.44 & 0.23 \\
+Boosted trees & 0.36 & 0.58 & 0.43 \\
+Safety margin & 0.55 & 0.78 & 0.54 \\
+Top-3 lookahead & 0.45 & 0.80 & 0.44 \\
+Exact lookahead$^\dagger$ & 0.66 & 0.83 & 0.69 \\
+Random & 0.00 & 0.01 & 0.01 \\
+\bottomrule
+\end{tabular}
+\\[2pt]{\scriptsize $^\dagger$ common subset only.}
+\end{table}

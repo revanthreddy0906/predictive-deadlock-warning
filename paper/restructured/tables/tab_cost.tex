@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{MEASURED COMPUTE PER STEP, IN MICROSECONDS AND AS A MULTIPLE OF ONE SIMULATION STEP (WHICH INCLUDES ONE SAFETY CHECK AND THE INDICATORS).}
+\label{tab:cost}
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{Average over sizes} & \multicolumn{2}{c}{$n=200$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Computation & $\mu$s & $\times$ step & $\mu$s & $\times$ step \\
+\midrule
+Simulation step & 289 & 1.00 & -- & -- \\
+One safety check & 60 & 0.21 & -- & -- \\
+Safety margin & 417 & 1.44 & 479 & 1.66 \\
+Top-3 lookahead & 231 & 0.80 & 264 & 0.91 \\
+Exact lookahead & 1{,}850 & 6.40 & 12{,}566 & 43.45 \\
+\bottomrule
+\end{tabular}
+\end{table}

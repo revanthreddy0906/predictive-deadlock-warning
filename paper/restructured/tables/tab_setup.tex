@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{TEST SPLIT PER WORKLOAD AND SYSTEM SIZE ($n$ PROCESSES, $m$ RESOURCE TYPES). TEST SPLIT: 150,000 SEQUENCES, 338.3\,M STEPS; TUNING SPLIT (NOT SHOWN): 45,000 SEQUENCES, 101.3\,M STEPS.}
+\label{tab:setup}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Workload & $n$ & $m$ & Sequences & Steps & Unsafe onsets & \% sequences with an onset & \% ending in deadlock & Claim tightness$^\ast$ \\
+\midrule
+Normal & 10 & 5 & 10{,}000 & 1{,}071{,}547 & 2{,}754 & 26.9 & 25.4 & 1.43 \\
+Normal & 25 & 8 & 10{,}000 & 4{,}494{,}155 & 1{,}674 & 15.7 & 14.3 & 1.43 \\
+Normal & 50 & 10 & 10{,}000 & 11{,}527{,}074 & 1{,}270 & 11.3 & 10.1 & 1.43 \\
+Normal & 100 & 20 & 10{,}000 & 39{,}280{,}274 & 8{,}469 & 65.8 & 62.7 & 1.43 \\
+Normal & 200 & 20 & 10{,}000 & 82{,}123{,}372 & 7{,}358 & 56.2 & 53.6 & 1.43 \\
+Spike & 10 & 5 & 10{,}000 & 707{,}662 & 7{,}066 & 70.7 & 70.7 & 1.58 \\
+Spike & 25 & 8 & 10{,}000 & 2{,}939{,}715 & 5{,}954 & 59.5 & 59.5 & 1.58 \\
+Spike & 50 & 10 & 10{,}000 & 7{,}434{,}425 & 5{,}317 & 53.2 & 53.2 & 1.58 \\
+Spike & 100 & 20 & 10{,}000 & 27{,}023{,}589 & 6{,}185 & 61.9 & 61.9 & 1.58 \\
+Spike & 200 & 20 & 10{,}000 & 56{,}973{,}051 & 5{,}346 & 53.5 & 53.5 & 1.58 \\
+Deadlock-prone & 10 & 5 & 10{,}000 & 1{,}020{,}230 & 4{,}073 & 40.7 & 40.7 & 1.48 \\
+Deadlock-prone & 25 & 8 & 10{,}000 & 4{,}036{,}769 & 4{,}047 & 40.5 & 40.5 & 1.48 \\
+Deadlock-prone & 50 & 10 & 10{,}000 & 9{,}877{,}410 & 4{,}513 & 45.1 & 45.1 & 1.48 \\
+Deadlock-prone & 100 & 20 & 10{,}000 & 29{,}793{,}804 & 9{,}316 & 93.2 & 93.2 & 1.48 \\
+Deadlock-prone & 200 & 20 & 10{,}000 & 59{,}959{,}348 & 9{,}270 & 92.7 & 92.7 & 1.48 \\
+\bottomrule
+\end{tabular}
+\\[2pt]{\scriptsize $^\ast$ Total declared maximum claims divided by total units; above 1 means processes together may claim more than exists.}
+\end{table*}

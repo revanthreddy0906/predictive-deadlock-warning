@@ -215,7 +215,7 @@ def main(argv=None):
     summ = pd.read_parquet(os.path.join(args.run, "summary.parquet"))
     cost = []
     sim_us = 1e6 * (summ.runtime - summ.lookahead_time - summ.get("extras_time", 0)).sum() / summ["T"].sum()
-    cost.append({"method": "simulation step (incl. 1 safety check + indicators)", "us_per_step": sim_us})
+    cost.append({"method": "simulation step (1 safety check + indicators)", "us_per_step": sim_us})
     cost.append({"method": "safety check (Banker's)", "us_per_step": 1e6 * summ.safety_time.sum() / summ["T"].sum()})
     for col, name in (("margin_time", "margin"), ("approx_time", "approx_lookahead"), ("lookahead_time", "lookahead")):
         if col in summ and summ[col].sum() > 0:

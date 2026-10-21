@@ -12,7 +12,13 @@ import os
 import numpy as np
 import pandas as pd
 
-ORDER = ["combined", "need_pressure", "contention", "waiting_ratio", "request_rate", "availability", "lookahead", "random"]
+ORDER = ["combined", "combined_max", "need_pressure", "contention", "waiting_ratio", "request_rate", "availability",
+         "logreg", "gbt", "margin", "approx_lookahead", "lookahead", "random"]
+NICE = {"combined": "combined (ours)", "combined_max": "combined, max", "need_pressure": "need pressure",
+        "contention": "contention", "waiting_ratio": "waiting ratio", "request_rate": "request rate",
+        "availability": "availability", "logreg": "logistic regr.", "gbt": "boosted trees",
+        "margin": "safety margin", "approx_lookahead": "top-3 lookahead", "lookahead": "exact lookahead",
+        "random": "random"}
 
 
 def fmt(x, nd=2):
@@ -46,7 +52,9 @@ def ci(df, k):
 def ordered(df):
     df = df.copy()
     df["_o"] = df["method"].map({m: i for i, m in enumerate(ORDER)}).fillna(99)
-    return df.sort_values("_o").drop(columns="_o")
+    df = df.sort_values("_o").drop(columns="_o")
+    df["method"] = df["method"].map(lambda m: NICE.get(m, m))
+    return df
 
 
 def main(argv=None):
@@ -77,15 +85,19 @@ def main(argv=None):
     write("tab_setup", latex(s, "Experimental setup per cell (test split). " + tot.replace("_", r"\_"), "tab:setup", 2, wide=True))
 
     o = ordered(read("overall"))
-    t = pd.DataFrame({"method": o.method, "precision": ci(o, "precision"), "recall": ci(o, "recall"),
-                      "F1": ci(o, "f1"), "FA/1000": o.fa_per_1000, "lead med.": o.lead_median.map(lambda v: f"{v:.0f}" if pd.notna(v) else "--"),
-                      r"lead$\geq$5": o.lead_ge_5, "alarms": o.alarms.round().astype(int)})
+    t = pd.DataFrame({"method": o.method, "precision": o.precision, "recall": o.recall,
+                      "F1 [95% CI]": ci(o, "f1"), "FA/1000": o.fa_per_1000,
+                      "lead med.": o.lead_median.map(lambda v: f"{v:.0f}" if pd.notna(v) else "--"),
+                      r"lead$\geq$5": o.lead_ge_5,
+                      "NAB": o["nab"].map(lambda v: f"{v:.1f}" if pd.notna(v) else "--") if "nab" in o else "--",
+                      "alarms": o.alarms.round().astype(int)})
     write("tab_main", latex(t, "Main results, unsafe target, $H_{max}=20$, test split, 95\\% bootstrap CIs.", "tab:main", wide=True))
 
     p = read("per_scenario")
     p = ordered(p)
     t = p.pivot_table(index="method", columns="scenario", values="f1", sort=False).reindex(
-        [m for m in ORDER if m in p.method.unique()]).reset_index()
+        [NICE.get(m, m) for m in ORDER if NICE.get(m, m) in set(p.method)]).reset_index()
+    t = t[["method"] + [c for c in ("normal", "spike", "deadlock_prone") if c in t]]
     write("tab_per_scenario", latex(t, "F1 per scenario (unsafe target, $H_{max}=20$).", "tab:scenario"))
 
     d = read("deadlock_target")
@@ -111,6 +123,31 @@ def main(argv=None):
 
     pl = read("paired_leads")
     write("tab_paired", latex(pl, "Paired lead times: combined vs each method, on events both captured.", "tab:paired", wide=True))
+
+    nc = os.path.join(ev, "noisy_claims.csv")
+    if os.path.exists(nc):
+        r = ordered(pd.read_csv(nc))
+        t = pd.DataFrame({"method": r.method, "F1, true claims": r.f1_true_claims,
+                          "F1, claims $\\pm$20%": r.f1_noisy_claims,
+                          "change": (r.f1_noisy_claims - r.f1_true_claims).map(lambda v: f"{v:+.3f}")})
+        write("tab_robust", latex(t, "Robustness: the same tuned rules when need pressure and contention are "
+                                     "computed from maximum claims misdeclared by up to $\\pm$20\\% "
+                                     "(ground truth uses the true claims).", "tab:robust", nd=3))
+
+    cp = os.path.join(ev, "cost.csv")
+    if os.path.exists(cp):
+        c = pd.read_csv(cp)
+        c["n"] = c["n"].fillna("").astype(str).str.replace(".0", "", regex=False)
+        c = c[(c.n == "") | (c.n == "all") | (c.n == c[c.n.str.isdigit()].n.astype(int).max().__str__()
+                                                     if c.n.str.isdigit().any() else False)]
+        short = {"simulation step (1 safety check + indicators)": "simulation step",
+                 "simulation step (incl. 1 safety check + indicators)": "simulation step",
+                 "safety check (Banker's)": "one safety check"}
+        c["method"] = c["method"].map(lambda m: short.get(m, NICE.get(m, m)))
+        t = pd.DataFrame({"computation": c.method, "processes": c.n.replace({"": "all", "all": "all"}),
+                          "$\\mu$s/step": c.us_per_step, "$\\times$ simulation step": c.relative_to_simulation_step})
+        write("tab_cost", latex(t, "Measured compute per step (test split). A simulation step includes one "
+                                   "safety check and the indicators; learned models add a few vector operations.", "tab:cost", nd=2))
 
     sc = os.path.join(args.scaling, "scaling.csv")
     if os.path.exists(sc):

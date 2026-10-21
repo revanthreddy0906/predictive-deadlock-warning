@@ -24,12 +24,18 @@ import pandas as pd
 
 from pdw import events, warning
 
-ORDER = ["combined", "need_pressure", "contention", "waiting_ratio", "request_rate", "availability", "lookahead", "random"]
-COLOR = dict(zip(ORDER, ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#898781"]))
-MARKER = dict(zip(ORDER, ["o", "s", "^", "D", "v", "P", "X", "."]))
-LABEL = {"combined": "combined", "need_pressure": "need pressure", "contention": "contention",
-         "waiting_ratio": "waiting ratio", "request_rate": "request rate", "availability": "availability",
-         "lookahead": "lookahead", "random": "random"}
+# Figures show the eight featured methods (one fixed categorical slot each, never cycled);
+# the remaining single indicators and the max-aggregation variant appear in the tables.
+ORDER = ["combined", "contention", "availability", "logreg", "gbt", "margin", "approx_lookahead", "lookahead",
+         "random"]
+COLOR = dict(zip(ORDER, ["#2a78d6", "#1baf7a", "#008300", "#eb6834", "#eda100", "#e87ba4", "#e34948", "#4a3aa7",
+                         "#898781"]))
+MARKER = dict(zip(ORDER, ["o", "^", "P", "s", "D", "v", "*", "X", "."]))
+LABEL = {"combined": "combined (ours)", "contention": "contention", "availability": "availability",
+         "logreg": "logistic regression", "gbt": "gradient-boosted trees", "margin": "safety margin",
+         "approx_lookahead": "top-3 lookahead", "lookahead": "exact lookahead", "random": "random"}
+NICE_ALL = {**LABEL, "need_pressure": "need pressure", "waiting_ratio": "waiting ratio",
+            "request_rate": "request rate", "combined_max": "combined (max)"}
 INK, MUTED, GRID = "#0b0b0b", "#898781", "#e1e0d9"
 SCEN = ["normal", "spike", "deadlock_prone"]
 
@@ -235,6 +241,85 @@ def fig_scaling(sc_dir, out):
     save(fig, out, "fig8_speedup")
 
 
+def fig_cost_frontier(ev_dir, out):
+    """Fig 9: accuracy vs compute. F1 on the sequences where every method was computed
+    (the lookahead subset) against extra compute per step, relative to one simulation step."""
+    sub = pd.read_csv(os.path.join(ev_dir, "lookahead_subset.csv")).set_index("method")
+    cost = pd.read_csv(os.path.join(ev_dir, "cost.csv"))
+    rel = {r.method: r.relative_to_simulation_step for r in cost[cost.get("n", "all").astype(str) == "all"].itertuples()}
+    floor = 0.01  # cheap indicators: a few sums per step, drawn at the axis floor
+    fig, ax = plt.subplots(figsize=(4.8, 3.3))
+    methods = [x for x in ORDER if x in sub.index and x != "random"]
+    cheap = sorted([m for m in methods if m not in rel], key=lambda m: -sub.loc[m, "f1"])
+    # cheap methods share x = floor: spread their labels vertically, with leader lines
+    label_y, y_prev = {}, None
+    for m in cheap:
+        y = sub.loc[m, "f1"]
+        y = min(y, y_prev - 0.055) if y_prev is not None else y
+        label_y[m], y_prev = y, y
+    for m in methods:
+        x, y = rel.get(m, floor), sub.loc[m, "f1"]
+        ax.scatter(x, y, s=60, color=COLOR[m], marker=MARKER[m], edgecolor="white", lw=1, zorder=3)
+        if m in label_y:
+            ax.annotate(LABEL[m], (x, y), xytext=(floor * 2.2, label_y[m]), textcoords="data", fontsize=7,
+                        va="center", arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.5})
+        else:
+            ax.annotate(LABEL[m], (x, y), xytext=(6, -10), textcoords="offset points", fontsize=7)
+    ax.set_xscale("log")
+    ax.set_xlim(0.005, max(list(rel.values()) + [1]) * 3)
+    ax.axvline(floor, color=GRID, lw=0.8)
+    ax.text(floor, ax.get_ylim()[1] if ax.get_ylim()[1] < 1 else 0.95, " ≈0 (cheap)", fontsize=6, color=MUTED,
+            va="top")
+    ax.set_xlabel("extra compute per step (× one simulation step, log scale)")
+    ax.set_ylabel("F1 (lookahead subset)")
+    ax.set_ylim(0, 1)
+    save(fig, out, "fig9_cost_frontier")
+
+
+def fig_precision_lead(ev_dir, out):
+    """Fig 10: precision vs median lead time along each method's threshold sweep."""
+    pr = pd.read_csv(os.path.join(ev_dir, "pr_curves.csv"))
+    if "lead_median" not in pr:
+        return
+    fig, ax = plt.subplots(figsize=(5.6, 3.4))
+    for m in [x for x in ORDER if x in pr.method.unique()]:
+        g = pr[pr.method == m].dropna(subset=["precision", "lead_median"]).sort_values("threshold")
+        ax.plot(g.lead_median, g.precision, color=COLOR[m], marker=MARKER[m], ms=3, lw=1.2, label=LABEL[m])
+        t = g[g.tuned]
+        if len(t):
+            ax.scatter(t.lead_median, t.precision, s=70, facecolor=COLOR[m], edgecolor="white", lw=1.5, zorder=4)
+    ax.set_xlabel("median lead time of captured onsets (steps)")
+    ax.set_ylabel("alarm precision")
+    ax.set_ylim(0, 1)
+    ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.02, 1))
+    ax.set_title("Threshold sweep · large dots: tuned operating points", loc="left", color=MUTED, fontsize=7)
+    save(fig, out, "fig10_precision_lead")
+
+
+def fig_robustness(ev_dir, out):
+    """Fig 11: F1 with true vs misdeclared (+-20%) maximum claims, same tuned rules."""
+    path = os.path.join(ev_dir, "noisy_claims.csv")
+    if not os.path.exists(path):
+        return
+    df = pd.read_csv(path)
+    df = df[df.method.isin(ORDER) | df.method.isin(NICE_ALL)]
+    y = np.arange(len(df))
+    fig, ax = plt.subplots(figsize=(4.8, 0.45 * len(df) + 0.8))
+    # neutral greys: the bars encode a condition, not a method, so method colours are not reused
+    ax.barh(y - 0.18, df.f1_true_claims, height=0.34, color="#52514e", label="true claims")
+    ax.barh(y + 0.18, df.f1_noisy_claims, height=0.34, color="#c3c2b7", label="claims misdeclared by up to ±20%")
+    for i, r in enumerate(df.itertuples()):
+        ax.text(max(r.f1_true_claims, r.f1_noisy_claims) + 0.01, i, f"{r.f1_noisy_claims - r.f1_true_claims:+.3f}",
+                va="center", fontsize=7, color=INK)
+    ax.set_yticks(y, [NICE_ALL.get(m, m) for m in df.method])
+    ax.invert_yaxis()
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("F1 (unsafe target, H_max = 20)")
+    ax.legend(frameon=False, loc="lower left", bbox_to_anchor=(0, 1.0), ncol=2)
+    ax.grid(axis="y", visible=False)
+    save(fig, out, "fig11_robustness")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", default="results/main_test")
@@ -251,6 +336,10 @@ def main(argv=None):
     fig_per_scenario(ev_dir, args.out)
     fig_hmax(ev_dir, args.out)
     fig_episodes(ev_dir, args.out)
+    if os.path.exists(os.path.join(ev_dir, "cost.csv")):
+        fig_cost_frontier(ev_dir, args.out)
+    fig_precision_lead(ev_dir, args.out)
+    fig_robustness(ev_dir, args.out)
     if os.path.exists(os.path.join(args.scaling, "scaling.csv")):
         fig_scaling(args.scaling, args.out)
     print("figures written to", args.out)

@@ -1,72 +1,255 @@
-@techreport{dijkstra1965,
+% Every DOI below was checked against the Crossref registry (Oct 2026).
+% Entries without a DOI are standard textbooks, technical reports or stable URLs.
+
+@techreport{Dijkstra-EWD123,
   author      = {Edsger W. Dijkstra},
-  title       = {Een algorithme ter voorkoming van de dodelijke omarming},
-  institution = {Technische Hogeschool Eindhoven},
-  number      = {EWD108},
-  year        = {1965},
-  url         = {https://www.cs.utexas.edu/users/EWD/ewd01xx/EWD108.PDF}
+  title       = {Cooperating Sequential Processes},
+  institution = {Technological University, Eindhoven},
+  number      = {EWD-123},
+  year        = {1965}
 }
 
-@misc{mitwiki,
-  author       = {{MIT Algorithm Wiki}},
-  title        = {Banker's Algorithm (Deadlock Avoidance)},
-  howpublished = {\url{https://algorithm-wiki.csail.mit.edu/wiki/Banker%27s_Algorithm_(Deadlock_Avoidance_Deadlock_avoidance)}},
-  note         = {Accessed October 2026}
+@misc{Dijkstra-EWD623,
+  author       = {Edsger W. Dijkstra},
+  title        = {The mathematics behind the {Banker's} Algorithm ({EWD} 623)},
+  year         = {1977},
+  note         = {In \emph{Selected Writings on Computing: A Personal Perspective}, Springer, 1982, pp.~308--312},
+  howpublished = {\url{https://www.cs.utexas.edu/~EWD/transcriptions/EWD06xx/EWD623.html}}
 }
 
-@article{bit_modified_banker,
-  title   = {A modified banker's algorithm with amortised $O(mn)$ complexity},
+@article{Habermann1969,
+  author  = {A. N. Habermann},
+  title   = {Prevention of System Deadlocks},
+  journal = {Communications of the ACM},
+  volume  = {12}, number = {7}, pages = {373--377, 385}, year = {1969},
+  doi     = {10.1145/363156.363160}
+}
+
+@article{Holt1971,
+  author  = {Richard C. Holt},
+  title   = {Comments on Prevention of System Deadlocks},
+  journal = {Communications of the ACM},
+  volume  = {14}, number = {1}, pages = {36--38}, year = {1971},
+  doi     = {10.1145/362452.362486}
+}
+
+@article{ParnasHabermann1972,
+  author  = {D. L. Parnas and A. N. Habermann},
+  title   = {Comment on Deadlock Preventive Method},
+  journal = {Communications of the ACM},
+  volume  = {15}, number = {9}, pages = {840--841}, year = {1972},
+  doi     = {10.1145/361573.361586}
+}
+
+@article{Coffman1971,
+  author  = {E. G. Coffman and M. Elphick and A. Shoshani},
+  title   = {System Deadlocks},
+  journal = {ACM Computing Surveys},
+  volume  = {3}, number = {2}, pages = {67--78}, year = {1971},
+  doi     = {10.1145/356586.356588}
+}
+
+@article{Holt1972,
+  author  = {Richard C. Holt},
+  title   = {Some Deadlock Properties of Computer Systems},
+  journal = {ACM Computing Surveys},
+  volume  = {4}, number = {3}, pages = {179--196}, year = {1972},
+  doi     = {10.1145/356603.356607}
+}
+
+@book{Silberschatz2018,
+  author    = {Abraham Silberschatz and Peter B. Galvin and Greg Gagne},
+  title     = {Operating System Concepts},
+  edition   = {10th}, publisher = {Wiley}, year = {2018},
+  isbn      = {978-1-119-32091-3}
+}
+
+@book{Tanenbaum2022,
+  author    = {Andrew S. Tanenbaum and Herbert Bos},
+  title     = {Modern Operating Systems},
+  edition   = {5th}, publisher = {Pearson}, year = {2022},
+  isbn      = {978-0-13-761887-3}
+}
+
+@article{Belik1987,
+  author  = {Ferenc Belik},
+  title   = {Deadlock Avoidance with a Modified Banker's Algorithm},
   journal = {BIT Numerical Mathematics},
-  doi     = {10.1007/BF01933724},
-  note    = {Bibliographic details to be verified against the DOI}
+  volume  = {27}, number = {3}, pages = {290--305}, year = {1987},
+  doi     = {10.1007/BF01933724}
 }
 
-@article{zohora2024dbdaa,
-  author  = {Zohora, Mst. Fatema and Farhin, Fariha and Kaiser, M. Shamim},
-  title   = {{DBDAA}: A real-time approach to Dynamic Banker's Deadlock Avoidance Algorithm with optimized time complexity},
+@article{Finkel1987,
+  author  = {Raphael Finkel and Hari H. Madduri},
+  title   = {An Efficient Deadlock Avoidance Algorithm},
+  journal = {Information Processing Letters},
+  volume  = {24}, number = {1}, pages = {25--30}, year = {1987},
+  doi     = {10.1016/0020-0190(87)90195-5}
+}
+
+@incollection{LiCook2007,
+  author    = {Youming Li and Robert Cook},
+  title     = {A New Algorithm and Asymptotical Properties for the Deadlock Detection Problem for Computer Systems with Reusable Resource Types},
+  booktitle = {Advances and Innovations in Systems, Computing Sciences and Software Engineering},
+  publisher = {Springer}, pages = {509--512}, year = {2007},
+  doi       = {10.1007/978-1-4020-6264-3_88}
+}
+
+@article{Lang1999,
+  author  = {Sheau-Dong Lang},
+  title   = {An Extended Banker's Algorithm for Deadlock Avoidance},
+  journal = {IEEE Transactions on Software Engineering},
+  volume  = {25}, number = {3}, year = {1999},
+  doi     = {10.1109/32.798330}
+}
+
+@article{Zohora2024,
+  author  = {Most Fatematuz Zohora and Fahiba Farhin and M. Shamim Kaiser},
+  title   = {{DBDAA}: A Real-Time Approach to Dynamic {Banker's} Deadlock Avoidance Algorithm with Optimized Time Complexity},
   journal = {PLOS ONE},
-  year    = {2024},
+  volume  = {19}, number = {9}, pages = {e0310807}, year = {2024},
   doi     = {10.1371/journal.pone.0310807}
 }
 
-@misc{gottlieb_os,
-  author       = {Allan Gottlieb},
-  title        = {Operating Systems lecture notes: deadlock avoidance, safe and unsafe states},
-  howpublished = {New York University, \url{https://cs.nyu.edu/~gottlieb/courses/2000s/2004-05-spring/os202/lectures/lecture-13.html}}
+@inproceedings{AndrewsLevin1982,
+  author    = {Gregory R. Andrews and Gary M. Levin},
+  title     = {On-the-fly Deadlock Prevention},
+  booktitle = {Proc. 1st ACM Symposium on Principles of Distributed Computing (PODC)},
+  year      = {1982},
+  doi       = {10.1145/800220.806694}
 }
 
-@inproceedings{lengoc2023,
-  author    = {Le Ngoc, Hieu and Tran Cong, Hung},
+@article{Agrawal1983,
+  author  = {Rakesh Agrawal and Michael J. Carey and David J. DeWitt},
+  title   = {Deadlock Detection is Cheap},
+  journal = {ACM SIGMOD Record},
+  volume  = {13}, number = {2}, pages = {19--34}, year = {1983},
+  doi     = {10.1145/984523.984524}
+}
+
+@article{Tunc2023,
+  author  = {H{\"u}nkar Can Tun{\c{c}} and Umang Mathur and Andreas Pavlogiannis and Mahesh Viswanathan},
+  title   = {Sound Dynamic Deadlock Prediction in Linear Time},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume  = {7}, number = {PLDI}, pages = {1733--1758}, year = {2023},
+  doi     = {10.1145/3591291}
+}
+
+@inproceedings{LeNgoc2023,
+  author    = {Hieu Le Ngoc and Hung Tran Cong},
   title     = {Enhancing Load Balancing in Cloud Computing Through Deadlock Prediction},
   booktitle = {Industrial Networks and Intelligent Systems (INISCOM 2023)},
-  publisher = {Springer},
-  year      = {2023},
+  series    = {LNICST}, volume = {531}, pages = {257--274},
+  publisher = {Springer}, year = {2023},
   doi       = {10.1007/978-3-031-47359-3_19}
 }
 
-@misc{oluwaseyi2024,
-  author       = {Oluwaseyi, Joseph},
-  title        = {{AI}-Enhanced Predictive Systems for Thread Deadlock Resolution},
-  howpublished = {EasyChair Preprint 14955},
-  year         = {2024}
+@misc{Oluwaseyi2024,
+  author       = {Joseph Oluwaseyi},
+  title        = {{AI}-Enhanced Predictive Systems for Thread Deadlock Resolution: Early Detection and Prevention in Cloud Applications},
+  howpublished = {EasyChair Preprint 14955 (not peer-reviewed)},
+  year         = {2024},
+  url          = {https://easychair.org/publications/preprint/fQbd/open}
 }
 
-@article{hyland2020,
-  author  = {Hyland, Stephanie L. and others},
-  title   = {Early prediction of circulatory failure in the intensive care unit using machine learning},
+@inproceedings{Lin2019DRAGON,
+  author    = {Chan-Yi Lin and Ting-An Yeh and Jerry Chou},
+  title     = {{DRAGON}: A Dynamic Scheduling and Scaling Controller for Managing Distributed Deep Learning Jobs in {Kubernetes} Cluster},
+  booktitle = {Proc. 9th Int. Conf. on Cloud Computing and Services Science (CLOSER)},
+  pages     = {569--577}, publisher = {SciTePress}, year = {2019},
+  doi       = {10.5220/0007707605690577}
+}
+
+@inproceedings{Jayaram2019FfDL,
+  author    = {K. R. Jayaram and Vinod Muthusamy and Parijat Dube and Vatche Ishakian and Chen Wang and Benjamin Herta and Scott Boag and Diana Arroyo and Asser Tantawi and Archit Verma and Falk Pollok and Rania Khalaf},
+  title     = {{FfDL}: A Flexible Multi-tenant Deep Learning Platform},
+  booktitle = {Proc. 20th Int. Middleware Conference (Middleware '19)},
+  pages     = {82--95}, year = {2019},
+  doi       = {10.1145/3361525.3361538}
+}
+
+@misc{K8sBlog2025,
+  author       = {{Kubernetes Project}},
+  title        = {Kubernetes v1.35: Introducing Workload Aware Scheduling},
+  year         = {2025},
+  howpublished = {\url{https://kubernetes.io/blog/2025/12/29/kubernetes-v1-35-introducing-workload-aware-scheduling/}}
+}
+
+@article{Hyland2020,
+  author  = {Stephanie L. Hyland and Martin Faltys and Matthias H{\"u}ser and Xinrui Lyu and Thomas Gumbsch and Crist{\'o}bal Esteban and Christian Bock and Max Horn and Michael Moor and Bastian Rieck and Marc Zimmermann and Dean Bodenham and Karsten Borgwardt and Gunnar R{\"a}tsch and Tobias M. Merz},
+  title   = {Early Prediction of Circulatory Failure in the Intensive Care Unit Using Machine Learning},
   journal = {Nature Medicine},
-  year    = {2020}
+  volume  = {26}, number = {3}, pages = {364--373}, year = {2020},
+  doi     = {10.1038/s41591-020-0789-4}
 }
 
-@misc{munchmeyer2020,
-  author       = {M{\"u}nchmeyer, Jannes and others},
-  title        = {The transformer earthquake alerting model: A new versatile approach to earthquake early warning},
-  howpublished = {arXiv:2009.06316},
-  year         = {2020}
+@article{Munchmeyer2021,
+  author  = {Jannes M{\"u}nchmeyer and Dino Bindi and Ulf Leser and Frederik Tilmann},
+  title   = {The Transformer Earthquake Alerting Model: A New Versatile Approach to Earthquake Early Warning},
+  journal = {Geophysical Journal International},
+  volume  = {225}, number = {1}, year = {2021},
+  doi     = {10.1093/gji/ggaa609}
 }
 
-@book{silberschatz,
-  author    = {Silberschatz, Abraham and Galvin, Peter B. and Gagne, Greg},
-  title     = {Operating System Concepts},
-  publisher = {Wiley}
+@inproceedings{Tatbul2018,
+  author    = {Nesime Tatbul and Tae Jun Lee and Stan Zdonik and Mejbah Alam and Justin Gottschlich},
+  title     = {Precision and Recall for Time Series},
+  booktitle = {Advances in Neural Information Processing Systems 31 (NeurIPS)},
+  pages     = {1924--1934}, year = {2018}
+}
+
+@inproceedings{Lavin2015,
+  author    = {Alexander Lavin and Subutai Ahmad},
+  title     = {Evaluating Real-Time Anomaly Detection Algorithms -- The {Numenta} Anomaly Benchmark},
+  booktitle = {Proc. IEEE 14th Int. Conf. on Machine Learning and Applications (ICMLA)},
+  pages     = {38--44}, year = {2015},
+  doi       = {10.1109/ICMLA.2015.141}
+}
+
+@article{Saito2015,
+  author  = {Takaya Saito and Marc Rehmsmeier},
+  title   = {The Precision-Recall Plot Is More Informative than the {ROC} Plot When Evaluating Binary Classifiers on Imbalanced Datasets},
+  journal = {PLoS ONE},
+  volume  = {10}, number = {3}, pages = {e0118432}, year = {2015},
+  doi     = {10.1371/journal.pone.0118432}
+}
+
+@inproceedings{Davis2006,
+  author    = {Jesse Davis and Mark Goadrich},
+  title     = {The Relationship Between Precision-Recall and {ROC} Curves},
+  booktitle = {Proc. 23rd Int. Conf. on Machine Learning (ICML)},
+  pages     = {233--240}, year = {2006},
+  doi       = {10.1145/1143844.1143874}
+}
+
+@book{Efron1993,
+  author    = {Bradley Efron and Robert J. Tibshirani},
+  title     = {An Introduction to the Bootstrap},
+  publisher = {Chapman \& Hall/CRC}, year = {1993},
+  doi       = {10.1201/9780429246593}
+}
+
+@inproceedings{Gunawi2016,
+  author    = {Haryadi S. Gunawi and Mingzhe Hao and Riza O. Suminto and Agung Laksono and Anang D. Satria and Jeffry Adityatama and Kurnia J. Eliazar},
+  title     = {Why Does the Cloud Stop Computing? Lessons from Hundreds of Service Outages},
+  booktitle = {Proc. 7th ACM Symposium on Cloud Computing (SoCC)},
+  pages     = {1--16}, year = {2016},
+  doi       = {10.1145/2987550.2987583}
+}
+
+@incollection{Ewaschuk2016SRE,
+  author    = {Rob Ewaschuk},
+  editor    = {Betsy Beyer and Chris Jones and Jennifer Petoff and Niall Richard Murphy},
+  title     = {Monitoring Distributed Systems},
+  booktitle = {Site Reliability Engineering: How {Google} Runs Production Systems},
+  publisher = {O'Reilly}, year = {2016},
+  isbn      = {978-1491929124}
+}
+
+@article{Salfner2010,
+  author  = {Felix Salfner and Maren Lenk and Miroslaw Malek},
+  title   = {A Survey of Online Failure Prediction Methods},
+  journal = {ACM Computing Surveys},
+  volume  = {42}, number = {3}, pages = {10:1--10:42}, year = {2010},
+  doi     = {10.1145/1670679.1670680}
 }

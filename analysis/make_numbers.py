@@ -16,9 +16,11 @@ import os
 import pandas as pd
 
 M = {"combined": "Comb", "need_pressure": "Need", "contention": "Cont", "waiting_ratio": "Wait",
-     "request_rate": "Rate", "availability": "Avail", "lookahead": "Look", "random": "Rand"}
+     "request_rate": "Rate", "availability": "Avail", "lookahead": "Look", "random": "Rand",
+     "combined_max": "CMax", "margin": "Marg", "approx_lookahead": "Appr", "logreg": "Lr", "gbt": "Gbt"}
 MET = {"precision": "P", "recall": "R", "f1": "F", "f1_lo": "Flo", "f1_hi": "Fhi",
-       "fa_per_1000": "FA", "lead_median": "Lead", "lead_ge_5": "LeadFive"}
+       "fa_per_1000": "FA", "lead_median": "Lead", "lead_ge_5": "LeadFive", "nab": "Nab",
+       "alarms_per_1000": "Apk"}
 SCEN = {"normal": "Normal", "spike": "Spike", "deadlock_prone": "Dlp"}
 
 
@@ -50,7 +52,8 @@ def main(argv=None):
         for r in df.itertuples():
             for col, short in MET.items():
                 if hasattr(r, col):
-                    put(f"{M[r.method]}{short}{suffix}", getattr(r, col), 0 if col == "lead_median" else 2)
+                    nd = 0 if col == "lead_median" else 1 if col == "nab" else 2
+                    put(f"{M[r.method]}{short}{suffix}", getattr(r, col), nd)
     for r in read("per_scenario").itertuples():
         put(f"{M[r.method]}F{SCEN[r.scenario]}", r.f1)
         put(f"{M[r.method]}Lead{SCEN[r.scenario]}", r.lead_median, 0)
@@ -90,6 +93,7 @@ def main(argv=None):
     put("NSeqAll", meta["totals"]["sequences"] + tmeta["totals"]["sequences"], 0)
     put("NStepsAllM", (meta["totals"]["steps"] + tmeta["totals"]["steps"]) / 1e6, 1)
     put("NSeedsPerCell", meta["config"]["seeds"]["count"], 0)
+    put("NSeedsTune", tmeta["config"]["seeds"]["count"], 0)
     put("NSizes", len(meta["config"]["sizes"]), 0)
     put("MaxN", max(s["processes"] for s in meta["config"]["sizes"]), 0)
     put("Machine", meta["machine"].get("instance_type", "local"))
@@ -104,10 +108,14 @@ def main(argv=None):
         if m == "random":
             put("RandP", 1000 * p["p"], 2)  # per 1000 eligible steps
             continue
+        if m not in M:
+            continue
         put(f"{M[m]}Th", p["threshold"], 0)
         put(f"{M[m]}K", p["k"], 0)
         put(f"{M[m]}Rf", p["R"], 0)
     put("CombW", best["combined"]["weights_name"])
+    if "combined_max" in best:
+        put("CMaxW", best["combined_max"]["weights_name"])
 
     sc = os.path.join(args.scaling, "scaling.csv")
     if os.path.exists(sc):
@@ -122,12 +130,38 @@ def main(argv=None):
         put("SlopeRef", f.loc[("reference_us_random_states", 20)])
         put("SafetyUsMax", big.safety_us_per_call.max(), 1)
 
+    nc = os.path.join(ev, "noisy_claims.csv")
+    if os.path.exists(nc):
+        for r in pd.read_csv(nc).itertuples():
+            put(f"{M[r.method]}Fnoisy", r.f1_noisy_claims, 3)
+            put(f"{M[r.method]}Fclean", r.f1_true_claims, 3)
+            put(f"{M[r.method]}Fdelta", r.f1_noisy_claims - r.f1_true_claims, 3)
+    cp = os.path.join(ev, "cost.csv")
+    if os.path.exists(cp):
+        c = pd.read_csv(cp)
+        c["n"] = c["n"].astype(str)
+        for name, key in (("margin", "Marg"), ("approx_lookahead", "Appr"), ("lookahead", "Look")):
+            g = c[c.method == name]
+            if len(g):
+                put(f"{key}CostAll", float(g[g.n == "all"].relative_to_simulation_step.iloc[0]), 1)
+                nums = g[g.n != "all"].assign(nn=lambda d: d.n.astype(float).astype(int))
+                put(f"{key}CostMaxN", float(nums.sort_values("nn").relative_to_simulation_step.iloc[-1]), 1)
+        sim = c[c.method.str.startswith("simulation step")]
+        if len(sim):
+            put("SimUsPerStep", float(sim.us_per_step.iloc[0]), 0)
+    mm = os.path.join(args.tuning, "ml_meta.json")
+    if os.path.exists(mm):
+        ml = json.load(open(mm))
+        put("MlRows", ml["rows"], 0)
+        put("MlPrior", 100 * ml["true_positive_step_share"], 1)
+
     summ = os.path.join(args.run, "summary.parquet")
     if os.path.exists(summ):
         sm = pd.read_parquet(summ)
         lk = sm[sm.lookahead_time > 0]
         big = lk[lk.n == lk.n.max()]
-        ratio = big.lookahead_time.sum() / (big.runtime - big.lookahead_time).sum()
+        extras_t = big["extras_time"] if "extras_time" in big else 0.0
+        ratio = big.lookahead_time.sum() / (big.runtime - big.lookahead_time - extras_t).sum()
         put("LookCost", ratio, 0)              # lookahead time / simulation time at the largest n
         put("LookCostN", big.n.max(), 0)
     aws_path = os.path.join("deployment", "aws_run.json")

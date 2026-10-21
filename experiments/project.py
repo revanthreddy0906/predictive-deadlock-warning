@@ -36,12 +36,14 @@ def main(argv=None):
 
     s = pd.read_parquet(os.path.join(args.pilot, "summary.parquet"))
     s["look"] = s["lookahead_time"] > 0
-    s["sim_s"] = s["runtime"] - s["lookahead_time"]
+    extras = s["extras_time"] if "extras_time" in s else 0.0
+    s["sim_s"] = s["runtime"] - s["lookahead_time"]  # simulation incl. extras (paid per sequence)
+    s["base_s"] = s["sim_s"] - extras                # plain step cost, which offline work scales with
     by = s.groupby(["scenario", "n"])
     sim_per_seq = by["sim_s"].mean()
     look_per_seq = s[s.look].groupby(["scenario", "n"])["lookahead_time"].mean()
     steps_per_seq = by["T"].mean()
-    us_per_step = 1e6 * s["sim_s"].sum() / s["T"].sum()
+    us_per_step = 1e6 * s["base_s"].sum() / s["T"].sum()
 
     workers = None
     total_cpu = 0.0

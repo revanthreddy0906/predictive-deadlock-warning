@@ -11,6 +11,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 PY=${PY:-.venv/bin/python}
+# One thread per worker process: the pipeline parallelises across processes, and
+# scikit-learn/OpenMP would otherwise start one thread per core inside every worker.
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 TUNING_CFG=${TUNING_CFG:-configs/tuning.yaml}
 MAIN_CFG=${MAIN_CFG:-configs/main.yaml}
 TUNING_RUN=${TUNING_RUN:-results/tuning}

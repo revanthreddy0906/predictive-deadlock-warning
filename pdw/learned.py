@@ -53,6 +53,8 @@ def score(model, ind: np.ndarray, prior: float = 0.5, window: int = 10) -> np.nd
     prior / (1 - prior)."""
     if len(ind) == 0:
         return np.zeros(0)
-    p = np.clip(model.predict_proba(features(ind, window))[:, 1], 1e-9, 1 - 1e-9)
-    odds = p / (1 - p) * prior / (1 - prior)
-    return 100.0 * odds / (1 + odds)
+    # float64 + log-odds: probabilities that round to exactly 1.0 in float32 must not
+    # produce a 0/0 (NaN), which would silently suppress alarms.
+    p = np.clip(model.predict_proba(features(ind, window))[:, 1].astype(np.float64), 1e-12, 1 - 1e-12)
+    logit = np.log(p) - np.log1p(-p) + np.log(prior) - np.log1p(-prior)
+    return 100.0 / (1.0 + np.exp(-logit))

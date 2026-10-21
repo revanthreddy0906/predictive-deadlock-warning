@@ -123,3 +123,12 @@ def test_nab_score_anchors():
     assert metrics.nab_score([1] * 10, 0, 10) < metrics.nab_score([15] * 10, 0, 10)
     assert metrics.nab_score([10] * 10, 50, 10) < metrics.nab_score([10] * 10, 0, 10)
     assert np.isnan(metrics.nab_score([], 3, 0))
+
+
+def test_learned_score_never_nan_at_extreme_probabilities():
+    class Extreme:
+        def predict_proba(self, X):
+            p = np.array([1.0, 0.0, 1 - 1e-12, 1e-12], dtype=np.float32)[: len(X)]
+            return np.stack([1 - p, p], axis=1)
+    s = learned.score(Extreme(), np.zeros((4, 5)), prior=0.03)
+    assert np.isfinite(s).all() and ((s >= 0) & (s <= 100)).all()

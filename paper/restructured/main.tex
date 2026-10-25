@@ -377,7 +377,7 @@ Random & 0.002 & 0.003 & 0.006 & 0.015 \\
 \finding{6}{Widening the horizon from 5 to 50 steps raised every method's F1 (rule-based 0.11 to 0.40) without changing their ranking.}
 
 \subsection{Scaling of the Safety Check}\label{sec:res-scaling}
-On random valid states, the vectorised safety check was 1.4--7.7 times faster than the textbook loop (Table~\ref{tab:scaling}, Fig.~\ref{fig:scaling}). Its time grew with a log--log slope of 0.29 in $n$ at $m=20$, against 0.77 for the reference loop, far below the $\Theta(mn^2)$ worst case. This is the average-case behaviour of one implementation on these states.
+On random valid states, the vectorised safety check was 1.4--7.7 times faster than the textbook loop (Table~\ref{tab:scaling}, Fig.~\ref{fig:scaling}). Its time grew with a log--log slope of 0.27 in $n$ at $m=20$, against 0.76 for the reference loop, far below the $\Theta(mn^2)$ worst case. This is the average-case behaviour of one implementation on these states.
 
 \input{tables/tab_scaling}
 \begin{figure}[t]\centering
@@ -385,7 +385,7 @@ On random valid states, the vectorised safety check was 1.4--7.7 times faster th
 \caption{Time per safety check against $n$ (log--log).}\label{fig:scaling}
 \end{figure}
 
-\finding{7}{The vectorised safety check grew far more slowly than $\Theta(mn^2)$ in these workloads (slope 0.29 at $m=20$); this is average-case behaviour of one implementation.}
+\finding{7}{The vectorised safety check grew far more slowly than $\Theta(mn^2)$ in these workloads (slope 0.27 at $m=20$); this is average-case behaviour of one implementation.}
 
 \subsection{Open Anomalies}\label{sec:anomalies}
 Six observations are not explained by anything above.

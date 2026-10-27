@@ -32,7 +32,7 @@ COLOR = dict(zip(ORDER, ["#2a78d6", "#1baf7a", "#008300", "#eb6834", "#eda100", 
                          "#898781"]))
 MARKER = dict(zip(ORDER, ["o", "^", "P", "s", "D", "v", "*", "X", "."]))
 LABEL = {"combined": "combined (ours)", "contention": "contention", "availability": "availability",
-         "logreg": "logistic regression", "gbt": "gradient-boosted trees", "margin": "safety margin",
+         "logreg": "logistic regression", "gbt": "boosted trees", "margin": "safety margin",
          "approx_lookahead": "top-3 lookahead", "lookahead": "exact lookahead", "random": "random"}
 NICE_ALL = {**LABEL, "need_pressure": "need pressure", "waiting_ratio": "waiting ratio",
             "request_rate": "request rate", "combined_max": "combined (max)"}
@@ -215,12 +215,21 @@ def fig_scaling(sc_dir, out):
     fig, axes = plt.subplots(1, 2, figsize=(7, 2.9))
     for ax, col, title in zip(axes, ["vectorised_us_random_states", "reference_us_random_states"],
                               ["vectorised (NumPy)", "reference (plain loops)"]):
+        ends = []
         for c, m, mk in zip(cols, ms, ["o", "s", "^"]):
             g = df[df.m == m].sort_values("n")
             slope = fits[(fits.metric == col) & (fits.m == m)].slope_log_n.iloc[0]
             ax.plot(g.n, g[col], color=c, marker=mk, ms=4)
-            ax.annotate(f"m={m} (slope {slope:.2f})", (g.n.iloc[-1], g[col].iloc[-1]), xytext=(4, 0),
-                        textcoords="offset points", fontsize=6, va="center")
+            ends.append((g[col].iloc[-1], g.n.iloc[-1], f"m={m} (slope {slope:.2f})"))
+        # end-of-line labels, pushed apart by 7% of the (log) axis height so they never overlap
+        ax.set_yscale("log")
+        lo, hi = ax.get_ylim()
+        gap = (hi / lo) ** 0.07
+        y_prev = None
+        for y, x, text in sorted(ends):
+            y_lab = y if y_prev is None else max(y, y_prev * gap)
+            ax.annotate(text, (x, y), xytext=(x * 1.12, y_lab), textcoords="data", fontsize=6, va="center")
+            y_prev = y_lab
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel("processes n")
@@ -239,6 +248,10 @@ def fig_scaling(sc_dir, out):
     ax.set_xlabel("processes n")
     ax.set_ylabel("speed-up (reference / vectorised)")
     save(fig, out, "fig8_speedup")
+
+
+# label offsets (points) for the state-based methods, which sit close together
+STATE_LABEL_OFFSET = {"lookahead": (6, -10), "margin": (-14, 8), "approx_lookahead": (-58, -14)}
 
 
 def fig_cost_frontier(ev_dir, out):
@@ -264,14 +277,15 @@ def fig_cost_frontier(ev_dir, out):
             ax.annotate(LABEL[m], (x, y), xytext=(floor * 2.2, label_y[m]), textcoords="data", fontsize=7,
                         va="center", arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.5})
         else:
-            ax.annotate(LABEL[m], (x, y), xytext=(6, -10), textcoords="offset points", fontsize=7)
+            ax.annotate(LABEL[m], (x, y), xytext=STATE_LABEL_OFFSET.get(m, (6, -10)),
+                        textcoords="offset points", fontsize=7)
     ax.set_xscale("log")
     ax.set_xlim(0.005, max(list(rel.values()) + [1]) * 3)
     ax.axvline(floor, color=GRID, lw=0.8)
     ax.text(floor, ax.get_ylim()[1] if ax.get_ylim()[1] < 1 else 0.95, " ≈0 (cheap)", fontsize=6, color=MUTED,
             va="top")
     ax.set_xlabel("extra compute per step (× one simulation step, log scale)")
-    ax.set_ylabel("F1 (lookahead subset)")
+    ax.set_ylabel("F1 (common subset)")
     ax.set_ylim(0, 1)
     save(fig, out, "fig9_cost_frontier")
 

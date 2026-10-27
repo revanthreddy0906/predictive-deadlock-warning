@@ -282,7 +282,7 @@ def fig_cost_frontier(ev_dir, out):
     ax.set_xscale("log")
     ax.set_xlim(0.005, max(list(rel.values()) + [1]) * 3)
     ax.axvline(floor, color=GRID, lw=0.8)
-    ax.text(floor, ax.get_ylim()[1] if ax.get_ylim()[1] < 1 else 0.95, " ≈0 (cheap)", fontsize=6, color=MUTED,
+    ax.text(floor, ax.get_ylim()[1] if ax.get_ylim()[1] < 1 else 0.95, " ≈0 (lightweight)", fontsize=6, color=MUTED,
             va="top")
     ax.set_xlabel("extra compute per step (× one simulation step, log scale)")
     ax.set_ylabel("F1 (common subset)")
@@ -302,7 +302,7 @@ def fig_precision_lead(ev_dir, out):
         t = g[g.tuned]
         if len(t):
             ax.scatter(t.lead_median, t.precision, s=70, facecolor=COLOR[m], edgecolor="white", lw=1.5, zorder=4)
-    ax.set_xlabel("median lead time of captured onsets (steps)")
+    ax.set_xlabel("median lead time before unsafe transitions (steps)")
     ax.set_ylabel("alarm precision")
     ax.set_ylim(0, 1)
     ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.02, 1))

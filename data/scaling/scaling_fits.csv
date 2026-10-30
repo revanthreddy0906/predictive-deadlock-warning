@@ -1,0 +1,10 @@
+metric,m,slope_log_n
+safety_us_per_call,5,0.15234853581951097
+safety_us_per_call,10,0.1606712508962898
+safety_us_per_call,20,0.20603508437384488
+vectorised_us_random_states,5,0.2845707937188286
+vectorised_us_random_states,10,0.22231257809394103
+vectorised_us_random_states,20,0.2707230485595378
+reference_us_random_states,5,0.8700471121726763
+reference_us_random_states,10,0.7938218596219351
+reference_us_random_states,20,0.7609812583625071

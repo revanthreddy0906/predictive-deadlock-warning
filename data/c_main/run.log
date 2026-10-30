@@ -1,0 +1,22 @@
+2026-10-21 06:59:09,161 INFO run c_main (hash 6e0cd021d67a): 6000 chunks to do, 32 workers
+2026-10-21 07:09:57,908 INFO 300/6000 chunks, 7500 sequences, 649s elapsed
+2026-10-21 07:12:35,641 INFO 600/6000 chunks, 15000 sequences, 806s elapsed
+2026-10-21 07:14:49,494 INFO 900/6000 chunks, 22500 sequences, 940s elapsed
+2026-10-21 07:17:52,082 INFO 1200/6000 chunks, 30000 sequences, 1123s elapsed
+2026-10-21 07:18:39,349 INFO 1500/6000 chunks, 37500 sequences, 1170s elapsed
+2026-10-21 07:19:03,215 INFO 1800/6000 chunks, 45000 sequences, 1194s elapsed
+2026-10-21 07:19:24,269 INFO 2100/6000 chunks, 52500 sequences, 1215s elapsed
+2026-10-21 07:19:53,099 INFO 2400/6000 chunks, 60000 sequences, 1244s elapsed
+2026-10-21 07:56:44,829 INFO 2700/6000 chunks, 67500 sequences, 3456s elapsed
+2026-10-21 08:26:55,362 INFO 3000/6000 chunks, 75000 sequences, 5266s elapsed
+2026-10-21 08:52:28,137 INFO 3300/6000 chunks, 82500 sequences, 6799s elapsed
+2026-10-21 09:20:18,475 INFO 3600/6000 chunks, 90000 sequences, 8469s elapsed
+2026-10-21 09:36:08,795 INFO 3900/6000 chunks, 97500 sequences, 9420s elapsed
+2026-10-21 09:47:15,318 INFO 4200/6000 chunks, 105000 sequences, 10086s elapsed
+2026-10-21 09:56:48,514 INFO 4500/6000 chunks, 112500 sequences, 10659s elapsed
+2026-10-21 10:07:33,434 INFO 4800/6000 chunks, 120000 sequences, 11304s elapsed
+2026-10-21 10:11:00,008 INFO 5100/6000 chunks, 127500 sequences, 11511s elapsed
+2026-10-21 10:13:31,662 INFO 5400/6000 chunks, 135000 sequences, 11663s elapsed
+2026-10-21 10:15:51,916 INFO 5700/6000 chunks, 142500 sequences, 11803s elapsed
+2026-10-21 10:18:47,348 INFO 6000/6000 chunks, 150000 sequences, 11978s elapsed
+2026-10-21 10:19:07,347 INFO done: 150000 sequences, 338262425 steps total

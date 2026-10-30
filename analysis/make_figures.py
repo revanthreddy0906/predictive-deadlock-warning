@@ -31,11 +31,11 @@ ORDER = ["combined", "contention", "availability", "logreg", "gbt", "margin", "a
 COLOR = dict(zip(ORDER, ["#2a78d6", "#1baf7a", "#008300", "#eb6834", "#eda100", "#e87ba4", "#e34948", "#4a3aa7",
                          "#898781"]))
 MARKER = dict(zip(ORDER, ["o", "^", "P", "s", "D", "v", "*", "X", "."]))
-LABEL = {"combined": "combined (ours)", "contention": "contention", "availability": "availability",
+LABEL = {"combined": "rule-based (ours)", "contention": "contention", "availability": "free-resource threshold",
          "logreg": "logistic regression", "gbt": "boosted trees", "margin": "safety margin",
-         "approx_lookahead": "top-3 lookahead", "lookahead": "exact lookahead", "random": "random"}
-NICE_ALL = {**LABEL, "need_pressure": "need pressure", "waiting_ratio": "waiting ratio",
-            "request_rate": "request rate", "combined_max": "combined (max)"}
+         "approx_lookahead": "partial lookahead", "lookahead": "full lookahead", "random": "random"}
+NICE_ALL = {**LABEL, "need_pressure": "demand ratio", "waiting_ratio": "blocked-process ratio",
+            "request_rate": "request rate", "combined_max": "rule-based (max)"}
 INK, MUTED, GRID = "#0b0b0b", "#898781", "#e1e0d9"
 SCEN = ["normal", "spike", "deadlock_prone"]
 
@@ -251,7 +251,7 @@ def fig_scaling(sc_dir, out):
 
 
 # label offsets (points) for the state-based methods, which sit close together
-STATE_LABEL_OFFSET = {"lookahead": (6, -10), "margin": (-14, 8), "approx_lookahead": (-58, -14)}
+STATE_LABEL_OFFSET = {"lookahead": (6, -10), "margin": (-14, 8), "approx_lookahead": (-62, -14)}
 
 
 def fig_cost_frontier(ev_dir, out):

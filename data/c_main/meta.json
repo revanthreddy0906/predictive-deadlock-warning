@@ -1,0 +1,79 @@
+{
+  "run_name": "c_main",
+  "config": {
+    "run_name": "c_main",
+    "split": "test",
+    "seeds": {
+      "start": 100000,
+      "count": 10000
+    },
+    "scenarios": [
+      "normal",
+      "spike",
+      "deadlock_prone"
+    ],
+    "sizes": [
+      {
+        "processes": 10,
+        "resources": 5
+      },
+      {
+        "processes": 25,
+        "resources": 8
+      },
+      {
+        "processes": 50,
+        "resources": 10
+      },
+      {
+        "processes": 100,
+        "resources": 20
+      },
+      {
+        "processes": 200,
+        "resources": 20
+      }
+    ],
+    "steps": 15000,
+    "indicator_window": 10,
+    "min_safe_gap": 5,
+    "lookahead": {
+      "max_n_all_seeds": 25,
+      "subsample_seeds": 200,
+      "subsample_by_n": {
+        "200": 50
+      }
+    },
+    "store_full_trace_seeds": 5,
+    "chunk_size": 25,
+    "workers": "auto",
+    "extras": true
+  },
+  "config_hash": "6e0cd021d67a",
+  "git": {
+    "commit": "328caf693712ddf74b7ad3e989183bdc4eadbd37",
+    "dirty": true
+  },
+  "machine": {
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "python": "3.12.3",
+    "cpu_count": 32,
+    "ram_gb": 61.8,
+    "instance_type": "c7i.8xlarge",
+    "libs": {
+      "numpy": "2.4.6",
+      "pandas": "3.0.6",
+      "pyarrow": "25.0.1"
+    }
+  },
+  "started": "2026-10-21T06:59:09",
+  "finished": "2026-10-21T10:19:07",
+  "wall_s_last_invocation": 11998.2,
+  "cpu_s_last_invocation": 382746.8,
+  "totals": {
+    "sequences": 150000,
+    "steps": 338262425,
+    "requests": 338262425
+  }
+}

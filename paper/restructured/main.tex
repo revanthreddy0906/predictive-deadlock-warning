@@ -1,5 +1,5 @@
-% Restructured full paper. Every number comes from results_ec2_c/results/c_main/eval/*.csv
-% (including eval/batches/*, produced by analysis/batches.py), c_tuning_small/* and scaling/*.
+% Restructured full paper. Every number comes from data/c_main/eval/*.csv
+% (including eval/batches/*, produced by analysis/batches.py), data/c_tuning_small/* and data/scaling/*.
 \documentclass[conference]{IEEEtran}
 \usepackage{iftex}
 \ifXeTeX
@@ -15,6 +15,11 @@
 \graphicspath{{figures/}}
 \input{../numbers}
 
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\makeatletter
+\newcommand{\linebreakand}{\end{@IEEEauthorhalign}\hfill\mbox{}\par\mbox{}\hfill\begin{@IEEEauthorhalign}}
+\makeatother
+
 \newcommand{\finding}[2]{\par\smallskip\noindent\fbox{\parbox{\dimexpr\columnwidth-2\fboxsep-2\fboxrule}{\textbf{Finding #1.} #2}}\par\smallskip}
 
 \begin{document}
@@ -22,18 +27,30 @@
 \title{Predictive Deadlock Warning: Early Detection of Unsafe States from Resource-Request Patterns}
 
 \author{\IEEEauthorblockN{Revanth Reddy Lingala}
-\IEEEauthorblockA{Dept.\ of Information Technology\\
-Chaitanya Bharathi Institute of Technology\\Hyderabad, India}
+\IEEEauthorblockA{\textit{Dept.\ of Information Technology}\\
+\textbf{\textit{Chaitanya Bharathi Institute of Technology}}\\Hyderabad, India\\
+revanthreddy0906@gmail.com}
 \and
 \IEEEauthorblockN{Padigela Srujan}
-\IEEEauthorblockA{Dept.\ of Information Technology\\
-Chaitanya Bharathi Institute of Technology\\Hyderabad, India}}
+\IEEEauthorblockA{\textit{Dept.\ of Information Technology}\\
+\textbf{\textit{Chaitanya Bharathi Institute of Technology}}\\Hyderabad, India\\
+padigela.srujan2007@gmail.com}
+\linebreakand
+\IEEEauthorblockN{Prathima Tirumalareddy}
+\IEEEauthorblockA{\textit{Dept.\ of Information Technology}\\
+\textbf{\textit{Chaitanya Bharathi Institute of Technology}}\\Hyderabad, India\\
+tprathima\_it@cbit.ac.in}
+\and
+\IEEEauthorblockN{A. Sirisha}
+\IEEEauthorblockA{\textit{Dept.\ of Information Technology}\\
+\textbf{\textit{Chaitanya Bharathi Institute of Technology}}\\Hyderabad, India\\
+asirisha\_it@cbit.ac.in}}
 
 \maketitle
 
 % =============================================================================
 \begin{abstract}
-Banker's algorithm decides whether a resource-allocation state is safe now; it gives no signal that a running system is drifting towards an unsafe state, and no study has measured how early, how reliably and at what cost that transition can be anticipated. We measured it in a discrete-event simulator that grants every valid request, so that unsafe states can occur, over three synthetic workloads and systems of 10 to 200 processes. We compared a rule-based score over five resource-pressure indicators with a free-resource threshold, single indicators, logistic regression and gradient-boosted trees on the same signals, a scalar safety margin, a partial and a full one-step lookahead, using event-level alarm precision, event recall and lead time on 150,000 test sequences (338.3 million simulation steps) disjoint from 45,000 tuning sequences. In these configurations the rule-based score reached F1 0.28 with a median warning of 10 steps, against 0.16 for the free-resource threshold and 0.006 for random alarms at a matched rate, and was ahead of both in all 20 of 20 independent replications; gradient-boosted trees on the same signals reached 0.48. On the sequences where all methods were computed, the safety margin reached F1 0.72 and full lookahead 0.74, at 1.7 and 43.5 times the compute of one simulation step for 200 processes in our NumPy implementation; the margin was lower by 0.027 (95\% interval 0.023--0.031) and equivalent within a post-hoc margin of $\pm0.05$, but both warned later (median 4 steps). The results describe one simulator, synthetic workloads with declared maximum claims and one implementation; real allocation traces and biased misdeclaration of claims remain untested.
+Banker's algorithm decides whether a resource-allocation state is safe now; it gives no signal that a running system is drifting towards an unsafe state. We measured how early, how reliably and at what cost that transition can be anticipated, in a discrete-event simulator that grants every valid request, over three synthetic workloads and systems of 10 to 200 processes. We compared a rule-based score over five resource-pressure indicators with a free-resource threshold, single indicators, logistic regression and gradient-boosted trees on the same signals, a scalar safety margin, and a partial and a full one-step lookahead, using event-level precision, recall and lead time on 150,000 test sequences (338.3 million simulation steps) disjoint from 45,000 tuning sequences. The rule-based score reached F1 0.28 with a median warning of 10 steps, against 0.16 for a free-resource threshold and 0.006 for random alarms at a matched rate, and was ahead of both in all 20 independent replications; gradient-boosted trees on the same signals reached 0.48. Where all methods were computed, the safety margin reached F1 0.72 and full lookahead 0.74, at 1.7 and 43.5 times the compute of one simulation step for 200 processes in our NumPy implementation; the margin was lower by 0.027 (95\% interval 0.023--0.031) but equivalent within a post-hoc margin of $\pm0.05$, and both warned later (median 4 steps). The results describe one simulator, synthetic workloads with declared maximum claims and one implementation; real allocation traces remain untested.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -49,12 +66,12 @@ What is known falls into three groups. The theory and complexity of avoidance ar
 
 A simple estimate suggests the problem is easy. Unsafety is a deterministic function of the allocation state, so any aggregate of outstanding need against free units should rise before the boundary is crossed, and a per-step safety check costs $\Theta(mn^2)$, affordable for small systems. The estimate does not say how far ahead such an aggregate rises, at what false-alarm rate, which aggregate works, how warning quality depends on the workload, or how the cost of Banker-based methods grows with $n$. These are the quantities we measured.
 
-Our thesis is that, in these configurations, lightweight indicators anticipate unsafe states about ten steps ahead with moderate precision; that non-linear combinations of the same signals do substantially better; and that a safety check with a fixed number of safety-algorithm runs per step comes within 0.03 F1 of full lookahead at a small fraction of its cost for large systems, but warns later than the lightweight indicators. Observations that we cannot explain are reported in Section~\ref{sec:anomalies}.
+Our thesis is that, in these configurations, lightweight indicators anticipate unsafe states about ten steps ahead with moderate precision; that non-linear combinations of the same signals do substantially better; and that a safety check with a small, bounded number of safety-algorithm runs per step comes within 0.03 F1 of full lookahead at a small fraction of its cost for large systems, but warns later than the lightweight indicators. Observations that we cannot explain are reported in Section~\ref{sec:anomalies}.
 
 The hypotheses below were formulated after two earlier, exploratory runs (Table~\ref{tab:campaigns}) and were not pre-registered; Section~\ref{sec:stats} lists the resulting deviations.
 \begin{itemize}
 \item \textbf{H1} (advance warning): a rule-based indicator score raises alarms before unsafe transitions with F1 above a matched-rate random baseline and a free-resource threshold (Section~\ref{sec:res-accuracy}).
-\item \textbf{H2} (equivalence at lower cost): the safety margin, which uses a fixed seven safety checks per step, is equivalent in F1 to full lookahead within $\pm\delta$, $\delta=0.05$ (Section~\ref{sec:res-frontier}).
+\item \textbf{H2} (equivalence at lower cost): the safety margin, which uses at most seven safety checks per step, is equivalent in F1 to full lookahead within $\pm\delta$, $\delta=0.05$ (Section~\ref{sec:res-frontier}).
 \item \textbf{H3} (claim robustness): F1 of claim-based indicators is insensitive to unbiased per-entry claim error (Section~\ref{sec:res-robust}). The companion hypothesis, that biased under-claiming degrades them, was not tested.
 \end{itemize}
 
@@ -133,7 +150,7 @@ Rule-based (ours) & weighted mean of 5 indicators & no & $\approx$0 \\
 Rule-based, max & weighted maximum & no & $\approx$0 \\
 Logistic regression & 5 indicators + 10-step changes & yes & $\approx$0 \\
 Boosted trees & same features & yes & $\approx$0 \\
-Safety margin & binary search over free units (7 checks) & no & 1.66 \\
+Safety margin & binary search over free units ($\le$7 checks) & no & 1.66 \\
 Partial lookahead & $\le$3 prospective-grant checks & no & 0.91 \\
 Full lookahead & 1 check per running process & no & 43.45 \\
 \bottomrule
@@ -277,7 +294,7 @@ Random & 0.014 [0.013, 0.014] & 0.422 & 9 \\
 \input{tables/tab_ablation}
 
 \begin{figure}[t]\centering
-\includegraphics[width=0.9\columnwidth]{fig3_pr_curves.pdf}
+\includegraphics[width=0.8\columnwidth]{fig3_pr_curves.pdf}
 \caption{Precision--recall along each threshold sweep (test split).}\label{fig:pr}
 \end{figure}
 
@@ -291,7 +308,7 @@ Warning quality depended on how danger built up (Table~\ref{tab:scenario}). The 
 \finding{2}{Warning quality depended on the workload: the rule-based score reached F1 0.42 on bursty workloads and 0.22--0.23 on gradual ones, where Banker-based methods kept a large advantage.}
 
 \subsection{Cost--Accuracy Frontier}\label{sec:res-frontier}
-Table~\ref{tab:cost} and Fig.~\ref{fig:frontier} relate accuracy to compute. One safety check took 59.9\,$\mu$s on average and one simulation step 289.2\,$\mu$s. The safety margin's seven checks cost 1.66 simulation steps at $n=200$ and the partial lookahead 0.91; their number of checks does not grow with $n$. Full lookahead, one check per running process, cost 43.45 at $n=200$. These costs are specific to our implementation---a NumPy-vectorised check in Python---not properties of the algorithms: an incremental safety test~\cite{Belik1987,Finkel1987} or a compiled implementation would move every Banker-based point, so the ratios, not the absolute times, are the result, and even the ratios are untested on a second implementation.
+Table~\ref{tab:cost} and Fig.~\ref{fig:frontier} relate accuracy to compute. One safety check took 59.9\,$\mu$s on average and one simulation step 289.2\,$\mu$s. The safety margin's (at most) seven checks cost 1.66 simulation steps at $n=200$ and the partial lookahead 0.91; their number of checks does not grow with $n$. Full lookahead, one check per running process, cost 43.45 at $n=200$. These costs are specific to our implementation---a NumPy-vectorised check in Python---not properties of the algorithms: an incremental safety test~\cite{Belik1987,Finkel1987} or a compiled implementation would move every Banker-based point, so the ratios, not the absolute times, are the result, and even the ratios are untested on a second implementation.
 
 On the common subset, the safety margin was lower than full lookahead by 0.027 [0.023, 0.031] in all 20 replications; the difference is not zero. Its 90\% interval, $[-0.030, -0.024]$, lies inside $\pm0.05$, so the two are equivalent at that margin ($p_{\mathrm{TOST}}<0.001$); they would be equivalent at any $\delta$ above 0.030, and not below. The partial lookahead was lower by 0.052 and is not equivalent at $\delta=0.05$ ($p_{\mathrm{TOST}}=0.87$). Since $\delta$ was fixed after the point estimates were known, H2 is supported only as an exploratory result.
 
@@ -299,11 +316,11 @@ The Banker-based methods bought their accuracy with later warnings (Fig.~\ref{fi
 
 \input{tables/tab_cost}
 \begin{figure}[t]\centering
-\includegraphics[width=0.9\columnwidth]{fig9_cost_frontier.pdf}
+\includegraphics[width=0.8\columnwidth]{fig9_cost_frontier.pdf}
 \caption{F1 on the common subset against extra compute per step, averaged over system sizes (log scale).}\label{fig:frontier}
 \end{figure}
 \begin{figure}[t]\centering
-\includegraphics[width=0.9\columnwidth]{fig10_precision_lead.pdf}
+\includegraphics[width=0.8\columnwidth]{fig10_precision_lead.pdf}
 \caption{Precision against median lead time along each threshold sweep.}\label{fig:leadprec}
 \end{figure}
 
@@ -381,7 +398,7 @@ On random valid states, the vectorised safety check was 1.4--7.7 times faster th
 
 \input{tables/tab_scaling}
 \begin{figure}[t]\centering
-\includegraphics[width=0.9\columnwidth]{fig7_scaling.pdf}
+\includegraphics[width=0.8\columnwidth]{fig7_scaling.pdf}
 \caption{Time per safety check against $n$ (log--log).}\label{fig:scaling}
 \end{figure}
 
@@ -416,14 +433,11 @@ Six observations are not explained by anything above.
 \section{Discussion and Conclusion}\label{sec:conclusion}
 Three things came out of the measurements that the simple estimate of Section~\ref{sec:intro} could not have told us. First, warning quality depended on the regime: lightweight indicators did well when danger built up abruptly and poorly when it built up gradually, and most methods degraded in larger systems, while blocked-process ratio improved. Second, two of our initial expectations were partly wrong: averaging indicators did worse than the strongest indicator alone, and the pilot run had suggested that full lookahead warns much later than the lightweight score (median 3 versus 7 steps), whereas in the main run the paired leads were 4 and 5. Third, the lightweight indicators hold more than a weighted sum extracts---boosted trees on the same features reached 0.48 against 0.28---and the ranking of methods depends on the population and the target: on identical sequences, the rule-based score anticipated deadlocks better than any Banker-based method.
 
-For a practitioner, the measurements suggest a procedure: run a lightweight score continuously and, when it crosses its threshold, evaluate the safety margin, which costs a fixed seven safety checks per step and in these configurations comes within 0.03 F1 of full lookahead; for small systems, full lookahead itself is affordable. The lightweight score supplies the earlier warning and the state check the precision. This procedure follows from the components' measurements; it was not tested end to end.
+For a practitioner, the measurements suggest a procedure: run a lightweight score continuously and, when it crosses its threshold, evaluate the safety margin, which costs at most seven safety checks per step and in these configurations comes within 0.03 F1 of full lookahead; for small systems, full lookahead itself is affordable. The lightweight score supplies the earlier warning and the state check the precision. This procedure follows from the components' measurements; it was not tested end to end.
 
-For designers of warning methods, the lesson is to compare methods on identical populations, with paired replicates, and to report compute cost and lead time alongside accuracy. In this study each of these changed a conclusion: population mixing hid the deadlock-target ranking, cost separated two methods within 0.03 F1 of each other, and lead time reversed the order of the lightweight and Banker-based methods.
-
-These results come from one simulator, synthetic workloads with declared claims, one implementation and one cloud instance. They do not establish behaviour on real allocators, under biased claims or in distributed settings.
-
+For designers of warning methods, the lesson is to compare methods on identical populations with paired replicates and to report compute cost and lead time alongside accuracy: here, population mixing hid the deadlock-target ranking, cost separated two methods within 0.03 F1, and lead time reversed the order of the lightweight and Banker-based methods.
 \section*{Data and Code Availability}
-The simulator, configurations, analysis scripts (including \texttt{analysis/batches.py} for the batch, equivalence and common-subset analyses), per-sequence evaluation rows and a sample of per-step traces are in the authors' repository and are available from the authors on request. Configurations record seeds, configuration hashes and commit identifiers (main run \texttt{328caf6}).
+The simulator, Banker's safety check and deadlock detection, the warning methods, learned baselines, configurations, AWS deployment scripts, 134 tests, analysis scripts and the main run's data (evaluation rows for all 150,000 test sequences, result tables, tuned thresholds and trained models) are at \url{https://github.com/revanthreddy0906/predictive-deadlock-warning}; its README lists the file and script behind each table and figure. Configurations record seeds, configuration hashes and commit identifiers (main run \texttt{328caf6}).
 
 \bibliographystyle{IEEEtran}
 \bibliography{../refs}

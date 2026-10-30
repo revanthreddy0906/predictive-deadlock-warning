@@ -1,0 +1,283 @@
+== 1/10 tests
+........................................................................ [ 54%]
+.............................................................            [100%]
+== 2/10 smoke
+2026-10-21 05:49:53,058 INFO run smoke (hash 3f11da5c508a): 4 chunks to do, 32 workers
+2026-10-21 05:49:53,165 INFO 1/4 chunks, 10 sequences, 0s elapsed
+2026-10-21 05:49:53,165 INFO 2/4 chunks, 20 sequences, 0s elapsed
+2026-10-21 05:49:53,166 INFO 3/4 chunks, 30 sequences, 0s elapsed
+2026-10-21 05:49:53,168 INFO 4/4 chunks, 40 sequences, 0s elapsed
+2026-10-21 05:49:53,202 INFO done: 40 sequences, 1192 steps total
+== 3/10 calibration
+                       seqs  any_event  mean_events  raw_onsets  first_event_med  early_frac    T_mean  unsafe_frac  tightness  end_deadlock  end_all_finished  end_max_steps
+scenario       n   m                                                                                                                                                         
+normal         10  5    200      0.265        0.270       0.295             78.0         0.0   107.165        0.036      1.438         0.265             0.735            0.0
+               25  8    200      0.140        0.155       0.200            318.0         0.0   451.895        0.010      1.430         0.125             0.875            0.0
+               50  10   200      0.120        0.125       0.180            864.5         0.0  1158.290        0.004      1.437         0.095             0.905            0.0
+               100 20   200      0.710        0.880       1.890           3223.5         0.0  3900.010        0.015      1.437         0.660             0.340            0.0
+               200 20   200      0.575        0.735       2.165           6677.0         0.0  8199.955        0.008      1.431         0.550             0.450            0.0
+spike          10  5    200      0.690        0.690       0.690             49.0         0.0    69.325        0.154      1.574         0.690             0.310            0.0
+               25  8    200      0.650        0.650       0.650            224.5         0.0   288.290        0.077      1.579         0.650             0.350            0.0
+               50  10   200      0.565        0.565       0.565            585.0         0.0   735.490        0.049      1.581         0.565             0.435            0.0
+               100 20   200      0.605        0.605       0.605           2115.0         0.0  2736.725        0.034      1.584         0.605             0.395            0.0
+               200 20   200      0.495        0.495       0.495           4389.0         0.0  5757.575        0.025      1.583         0.495             0.505            0.0
+deadlock_prone 10  5    200      0.400        0.400       0.400             74.0         0.0   102.425        0.053      1.464         0.400             0.600            0.0
+               25  8    200      0.455        0.455       0.455            313.0         0.0   404.545        0.031      1.496         0.455             0.545            0.0
+               50  10   200      0.465        0.465       0.465            785.0         0.0   980.265        0.017      1.484         0.465             0.535            0.0
+               100 20   200      0.945        0.945       0.945           2738.0         0.0  2937.685        0.027      1.485         0.945             0.055            0.0
+               200 20   200      0.915        0.915       0.915           5695.0         0.0  6047.270        0.012      1.480         0.915             0.085            0.0
+== 4/10 tuning runs
+2026-10-21 05:50:56,255 INFO run c_tuning_small (hash 494f668de6ef): 1800 chunks to do, 32 workers
+2026-10-21 05:59:06,075 INFO 90/1800 chunks, 2250 sequences, 490s elapsed
+2026-10-21 06:00:17,645 INFO 180/1800 chunks, 4500 sequences, 561s elapsed
+2026-10-21 06:00:53,504 INFO 270/1800 chunks, 6750 sequences, 597s elapsed
+2026-10-21 06:01:46,813 INFO 360/1800 chunks, 9000 sequences, 651s elapsed
+2026-10-21 06:02:13,985 INFO 450/1800 chunks, 11250 sequences, 678s elapsed
+2026-10-21 06:02:21,885 INFO 540/1800 chunks, 13500 sequences, 686s elapsed
+2026-10-21 06:02:27,652 INFO 630/1800 chunks, 15750 sequences, 691s elapsed
+2026-10-21 06:02:35,890 INFO 720/1800 chunks, 18000 sequences, 700s elapsed
+2026-10-21 06:10:49,624 INFO 810/1800 chunks, 20250 sequences, 1193s elapsed
+2026-10-21 06:23:19,082 INFO 900/1800 chunks, 22500 sequences, 1943s elapsed
+2026-10-21 06:31:39,872 INFO 990/1800 chunks, 24750 sequences, 2444s elapsed
+2026-10-21 06:40:00,724 INFO 1080/1800 chunks, 27000 sequences, 2944s elapsed
+2026-10-21 06:45:49,276 INFO 1170/1800 chunks, 29250 sequences, 3293s elapsed
+2026-10-21 06:49:33,033 INFO 1260/1800 chunks, 31500 sequences, 3517s elapsed
+2026-10-21 06:52:16,286 INFO 1350/1800 chunks, 33750 sequences, 3680s elapsed
+2026-10-21 06:55:28,223 INFO 1440/1800 chunks, 36000 sequences, 3872s elapsed
+2026-10-21 06:56:45,439 INFO 1530/1800 chunks, 38250 sequences, 3949s elapsed
+2026-10-21 06:57:30,205 INFO 1620/1800 chunks, 40500 sequences, 3994s elapsed
+2026-10-21 06:58:12,909 INFO 1710/1800 chunks, 42750 sequences, 4037s elapsed
+2026-10-21 06:59:02,404 INFO 1800/1800 chunks, 45000 sequences, 4086s elapsed
+2026-10-21 06:59:08,757 INFO done: 45000 sequences, 101341468 steps total
+== 5/10 test runs
+2026-10-21 06:59:09,161 INFO run c_main (hash 6e0cd021d67a): 6000 chunks to do, 32 workers
+2026-10-21 07:09:57,908 INFO 300/6000 chunks, 7500 sequences, 649s elapsed
+2026-10-21 07:12:35,641 INFO 600/6000 chunks, 15000 sequences, 806s elapsed
+2026-10-21 07:14:49,494 INFO 900/6000 chunks, 22500 sequences, 940s elapsed
+2026-10-21 07:17:52,082 INFO 1200/6000 chunks, 30000 sequences, 1123s elapsed
+2026-10-21 07:18:39,349 INFO 1500/6000 chunks, 37500 sequences, 1170s elapsed
+2026-10-21 07:19:03,215 INFO 1800/6000 chunks, 45000 sequences, 1194s elapsed
+2026-10-21 07:19:24,269 INFO 2100/6000 chunks, 52500 sequences, 1215s elapsed
+2026-10-21 07:19:53,099 INFO 2400/6000 chunks, 60000 sequences, 1244s elapsed
+2026-10-21 07:56:44,829 INFO 2700/6000 chunks, 67500 sequences, 3456s elapsed
+2026-10-21 08:26:55,362 INFO 3000/6000 chunks, 75000 sequences, 5266s elapsed
+2026-10-21 08:52:28,137 INFO 3300/6000 chunks, 82500 sequences, 6799s elapsed
+2026-10-21 09:20:18,475 INFO 3600/6000 chunks, 90000 sequences, 8469s elapsed
+2026-10-21 09:36:08,795 INFO 3900/6000 chunks, 97500 sequences, 9420s elapsed
+2026-10-21 09:47:15,318 INFO 4200/6000 chunks, 105000 sequences, 10086s elapsed
+2026-10-21 09:56:48,514 INFO 4500/6000 chunks, 112500 sequences, 10659s elapsed
+2026-10-21 10:07:33,434 INFO 4800/6000 chunks, 120000 sequences, 11304s elapsed
+2026-10-21 10:11:00,008 INFO 5100/6000 chunks, 127500 sequences, 11511s elapsed
+2026-10-21 10:13:31,662 INFO 5400/6000 chunks, 135000 sequences, 11663s elapsed
+2026-10-21 10:15:51,916 INFO 5700/6000 chunks, 142500 sequences, 11803s elapsed
+2026-10-21 10:18:47,348 INFO 6000/6000 chunks, 150000 sequences, 11978s elapsed
+2026-10-21 10:19:07,347 INFO done: 150000 sequences, 338262425 steps total
+== 5b/10 train learned baselines
+{
+  "rows": 497560,
+  "positives": 248780,
+  "neg_sample_rate": 0.05,
+  "true_positive_step_share": 0.00499,
+  "features": "5 indicators + their change over the indicator window",
+  "label": "primary unsafe onset within [t+1, t+20]",
+  "train_seeds": "even tuning seeds",
+  "threshold_tuning_seeds": "odd tuning seeds",
+  "seconds": 3.6
+}
+== 6/10 tune
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+/home/ubuntu/pdw/pdw/learned.py:57: RuntimeWarning: divide by zero encountered in divide
+  odds = p / (1 - p) * prior / (1 - prior)
+/home/ubuntu/pdw/pdw/learned.py:58: RuntimeWarning: invalid value encountered in divide
+  return 100.0 * odds / (1 + odds)
+== 6/10 tune (resumed)
+                 threshold    k   R       weights_name        f1 precision    recall fa_per_1000 lead_median feasible         p
+combined                65    1  10  double_contention  0.285916  0.240195  0.353137    0.335864        10.0     True       NaN
+need_pressure           95    1  20                  -  0.191891  0.317675  0.137463    0.072527         7.0     True       NaN
+contention              60    1  20                  -  0.340288  0.300169  0.392785    0.224952         7.0     True       NaN
+waiting_ratio           90    1  10                  -  0.248483  0.239183  0.258536    0.311807        13.0     True       NaN
+request_rate            95    3  20                  -  0.136448   0.16261  0.117538    0.148685         9.0     True       NaN
+availability            95    1  20                  -  0.159725  0.104144  0.342532    0.723791         9.0     True       NaN
+lookahead               30    1  10                  -  0.734003  0.679683  0.797761    0.483775         4.0     True       NaN
+combined_max            60    1  20  double_contention  0.340288  0.300169  0.392785    0.224952         7.0     True       NaN
+margin                  65    1  20                  -   0.62746  0.642752  0.612879    0.083677         4.0     True       NaN
+approx_lookahead        35    1  20                  -  0.577955  0.542459  0.618422    0.128131         5.0     True       NaN
+logreg                  30    3  10                  -  0.316139  0.246558  0.440433    0.470438        12.0     True       NaN
+gbt                     35    1  10                  -  0.477246  0.406974  0.576852    0.288747        11.0     True       NaN
+random                 NaN  NaN  10                NaN       NaN       NaN       NaN         NaN         NaN      NaN  0.000449
+== 7/10 evaluate
+== Overall, unsafe target, H_max = 20 (test split)
+          method  precision  recall    f1  f1_lo  f1_hi  fa_per_1000  lead_median  events   alarms
+        combined      0.236   0.344 0.280  0.277  0.283        0.333         10.0 82612.0 147529.0
+   need_pressure      0.314   0.136 0.190  0.187  0.193        0.072          7.0 82612.0  35750.0
+      contention      0.300   0.388 0.338  0.336  0.341        0.221          7.0 82612.0 106873.0
+   waiting_ratio      0.242   0.259 0.250  0.248  0.252        0.307         13.0 82612.0 136824.0
+    request_rate      0.161   0.116 0.135  0.133  0.137        0.148          9.0 82612.0  59822.0
+    availability      0.106   0.344 0.162  0.160  0.164        0.708          8.0 82612.0 268034.0
+       lookahead      0.690   0.810 0.745  0.741  0.749        0.624          4.0 26382.0  35744.0
+    combined_max      0.300   0.388 0.338  0.336  0.341        0.221          7.0 82612.0 106873.0
+          margin      0.639   0.611 0.625  0.622  0.627        0.084          4.0 82612.0  78901.0
+approx_lookahead      0.541   0.617 0.576  0.574  0.579        0.128          5.0 82612.0  94189.0
+          logreg      0.240   0.435 0.310  0.307  0.312        0.480         12.0 82612.0 213974.0
+             gbt      0.406   0.579 0.477  0.475  0.480        0.292         11.0 82612.0 166088.0
+          random      0.005   0.009 0.006  0.006  0.006        0.438         11.0 82612.0 148993.8
+
+== Episode outcomes
+      scenario  ep_recovered  ep_deadlocked  ep_censored  recovered_frac  deadlocked_frac
+deadlock_prone             0          31219            0           0.000            1.000
+        normal          4912          16613            0           0.228            0.772
+         spike             0          29868            0           0.000            1.000
+
+Wrote 16 tables to results/c_main/eval
+== 8/10 scaling
+  n  m  sequences  steps  safety_us_per_call  detect_us_per_call  detect_calls_per_step  steps_per_sec  us_per_step  vectorised_us_random_states  reference_us_random_states  speedup  peak_rss_mb
+ 10  5         20   2163               17.44               21.55                   0.06        9935.33       100.65                         7.14                        9.69     1.36        68.48
+ 10 10         20   3475               18.62               21.89                   0.07        9704.09       103.05                         6.86                        9.39     1.37        68.51
+ 10 20         20   6097               18.31               23.36                   0.05        9639.51       103.74                         6.92                       10.47     1.51        68.50
+ 25  5         20   5861               17.48               23.23                   0.04        9884.01       101.17                         9.03                       19.47     2.16        68.54
+ 25 10         20  10821               18.93               23.83                   0.05        9561.02       104.59                         7.36                       17.55     2.39        68.48
+ 25 20         20  16288               19.96               25.57                   0.04        9306.63       107.45                         7.41                       17.34     2.34        68.51
+ 50  5         20  11555               17.75               25.96                   0.01        9795.02       102.09                         9.09                       29.62     3.26        68.54
+ 50 10         20  22658               20.91               26.77                   0.06        8822.93       113.34                         8.08                       28.45     3.52        68.50
+ 50 20         20  33825               23.10               29.26                   0.05        8416.35       118.82                         9.02                       28.60     3.17        68.98
+100  5         20  24129               20.99               30.68                   0.00        9092.90       109.98                        12.07                       60.84     5.04        68.79
+100 10         20  39921               23.88               32.43                   0.03        8473.46       118.02                         9.86                       51.91     5.26        69.26
+100 20         20  40000               25.27                0.00                   0.00        8413.60       118.86                        11.16                       54.32     4.87        69.75
+200  5         20  39677               28.37               40.66                   0.00        7743.29       129.14                        17.82                      137.96     7.74        69.29
+200 10         20  40000               30.37                0.00                   0.00        7595.49       131.66                        13.66                      103.30     7.56        69.73
+200 20         20  40000               35.17                0.00                   0.00        7060.35       141.64                        15.55                       99.67     6.41        71.51
+                     metric  m  slope_log_n
+         safety_us_per_call  5         0.15
+         safety_us_per_call 10         0.16
+         safety_us_per_call 20         0.21
+vectorised_us_random_states  5         0.28
+vectorised_us_random_states 10         0.22
+vectorised_us_random_states 20         0.27
+ reference_us_random_states  5         0.87
+ reference_us_random_states 10         0.79
+ reference_us_random_states 20         0.76
+== 9/10 tables+figs
+tables written to paper/tables
+figures written to paper/figures
+== 10/10 deliverables
+PIPELINE DONE: results/deliverables.tgz
+PIPELINE_EXIT=0

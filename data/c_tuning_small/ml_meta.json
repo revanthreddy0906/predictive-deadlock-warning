@@ -1,0 +1,11 @@
+{
+  "rows": 497560,
+  "positives": 248780,
+  "neg_sample_rate": 0.05,
+  "true_positive_step_share": 0.00499,
+  "features": "5 indicators + their change over the indicator window",
+  "label": "primary unsafe onset within [t+1, t+20]",
+  "train_seeds": "even tuning seeds",
+  "threshold_tuning_seeds": "odd tuning seeds",
+  "seconds": 3.6
+}

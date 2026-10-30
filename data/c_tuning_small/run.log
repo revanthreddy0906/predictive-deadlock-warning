@@ -1,0 +1,22 @@
+2026-10-21 05:50:56,255 INFO run c_tuning_small (hash 494f668de6ef): 1800 chunks to do, 32 workers
+2026-10-21 05:59:06,075 INFO 90/1800 chunks, 2250 sequences, 490s elapsed
+2026-10-21 06:00:17,645 INFO 180/1800 chunks, 4500 sequences, 561s elapsed
+2026-10-21 06:00:53,504 INFO 270/1800 chunks, 6750 sequences, 597s elapsed
+2026-10-21 06:01:46,813 INFO 360/1800 chunks, 9000 sequences, 651s elapsed
+2026-10-21 06:02:13,985 INFO 450/1800 chunks, 11250 sequences, 678s elapsed
+2026-10-21 06:02:21,885 INFO 540/1800 chunks, 13500 sequences, 686s elapsed
+2026-10-21 06:02:27,652 INFO 630/1800 chunks, 15750 sequences, 691s elapsed
+2026-10-21 06:02:35,890 INFO 720/1800 chunks, 18000 sequences, 700s elapsed
+2026-10-21 06:10:49,624 INFO 810/1800 chunks, 20250 sequences, 1193s elapsed
+2026-10-21 06:23:19,082 INFO 900/1800 chunks, 22500 sequences, 1943s elapsed
+2026-10-21 06:31:39,872 INFO 990/1800 chunks, 24750 sequences, 2444s elapsed
+2026-10-21 06:40:00,724 INFO 1080/1800 chunks, 27000 sequences, 2944s elapsed
+2026-10-21 06:45:49,276 INFO 1170/1800 chunks, 29250 sequences, 3293s elapsed
+2026-10-21 06:49:33,033 INFO 1260/1800 chunks, 31500 sequences, 3517s elapsed
+2026-10-21 06:52:16,286 INFO 1350/1800 chunks, 33750 sequences, 3680s elapsed
+2026-10-21 06:55:28,223 INFO 1440/1800 chunks, 36000 sequences, 3872s elapsed
+2026-10-21 06:56:45,439 INFO 1530/1800 chunks, 38250 sequences, 3949s elapsed
+2026-10-21 06:57:30,205 INFO 1620/1800 chunks, 40500 sequences, 3994s elapsed
+2026-10-21 06:58:12,909 INFO 1710/1800 chunks, 42750 sequences, 4037s elapsed
+2026-10-21 06:59:02,404 INFO 1800/1800 chunks, 45000 sequences, 4086s elapsed
+2026-10-21 06:59:08,757 INFO done: 45000 sequences, 101341468 steps total

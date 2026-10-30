@@ -1,0 +1,7 @@
+{
+ "batches": 50,
+ "delta": 0.05,
+ "bootstrap": 200,
+ "sequences_full": 150000,
+ "sequences_subset": 61350
+}

@@ -1,10 +1,12 @@
 ---
 title: "Predictive Deadlock Warning — the paper explained simply"
 subtitle: "Every idea, every table with its numbers explained, every figure, and what to conclude"
-author: "Revanth Reddy Lingala and Padigela Srujan"
+author: "Revanth Reddy Lingala, Padigela Srujan, Prathima Tirumalareddy and A. Sirisha"
 ---
 
 # 1. The paper in one minute
+
+Code and data: <https://github.com/revanthreddy0906/predictive-deadlock-warning>
 
 Operating systems hand out resources (memory blocks, printers, GPUs, locks) to processes. If they hand them out carelessly, processes can end up stuck forever, each holding something another one needs. That is a **deadlock**.
 
@@ -193,7 +195,7 @@ Each table below is copied from the paper with the same numbers, followed by wha
 | Rule-based, max | weighted maximum | no | ≈0 |
 | Logistic regression | 5 indicators + 10-step changes | yes | ≈0 |
 | Boosted trees | same features | yes | ≈0 |
-| Safety margin | binary search over free units (7 checks) | no | 1.66 |
+| Safety margin | binary search over free units (at most 7 checks) | no | 1.66 |
 | Partial lookahead | ≤3 prospective-grant checks | no | 0.91 |
 | Full lookahead | 1 check per running process | no | 43.45 |
 
@@ -207,7 +209,7 @@ Each table below is copied from the paper with the same numbers, followed by wha
 
 - **Random, Bernoulli, matched rate**: a coin flip at every step, with the coin weighted so it raises about as many alarms as our method. If a method cannot beat this, it is useless.
 - **Logistic regression, "5 indicators + 10-step changes"**: the five indicators plus how much each changed over the last 10 steps (so the model can see trends).
-- **Safety margin, "7 checks"**: a binary search, like guessing a number by halving, needs about 7 Banker checks to find how much free resource could disappear before the state turns unsafe.
+- **Safety margin, "7 checks"**: a binary search, like guessing a number by halving, needs at most 7 Banker checks to find how much free resource could disappear before the state turns unsafe.
 - **Full lookahead, 43.45**: one Banker check for each running process. With 200 processes that is up to 200 checks, so it costs about 43 normal steps.
 
 **Conclude.** Nine methods are essentially free; three use Banker's algorithm and cost real compute, one of them a lot.
@@ -484,12 +486,12 @@ Note that 0.24 here is the *equal-weight* version. The paper's final rule-based 
 
 - **One simulation step = 289 µs.** That is everything the simulator does in one tick, including one Banker check and computing the five indicators. This is our unit of cost.
 - **One safety check = 60 µs = 0.21 steps.**
-- **Safety margin = 417 µs on average (1.44×), 479 µs at n = 200 (1.66×).** It barely grows with size, because it always does about 7 checks.
+- **Safety margin = 417 µs on average (1.44×), 479 µs at n = 200 (1.66×).** It barely grows with size, because it always does at most 7 checks.
 - **Partial lookahead: 0.80× → 0.91×.** At most 3 checks, so it also barely grows.
 - **Full lookahead: 6.40× on average, but 43.45× at n = 200 (12.6 milliseconds per step).** It does one check per process, so the bigger the system, the more it costs.
 - The lightweight methods are not listed because their extra cost is negligible.
 
-**Important caveat.** These are timings of *our* Python/NumPy code on one machine. Faster code would change the microseconds, so the **ratios** (fixed 7 checks vs one check per process) are the lasting lesson.
+**Important caveat.** These are timings of *our* Python/NumPy code on one machine. Faster code would change the microseconds, so the **ratios** (at most 7 checks vs one check per process) are the lasting lesson.
 
 **Conclude.** Safety margin costs about the same as one extra simulation step no matter the size. Full lookahead becomes very expensive in big systems: about 26× costlier than the safety margin at n = 200 (43.45 ÷ 1.66).
 

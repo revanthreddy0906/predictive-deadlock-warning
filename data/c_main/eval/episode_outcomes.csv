@@ -1,0 +1,4 @@
+scenario,ep_recovered,ep_deadlocked,ep_censored,recovered_frac,deadlocked_frac
+deadlock_prone,0,31219,0,0.0,1.0
+normal,4912,16613,0,0.22819976771196285,0.7718002322880372
+spike,0,29868,0,0.0,1.0

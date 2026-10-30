@@ -13,3 +13,9 @@ results_ec2/
 paper/*.log
 paper/*.aux
 results_ec2_c/
+!data/**/*.parquet
+paper/restructured/*.aux
+paper/restructured/*.bbl
+paper/restructured/*.blg
+paper/restructured/*.out
+paper/restructured/proof_of_cloud_runs.zip

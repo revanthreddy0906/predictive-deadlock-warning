@@ -1,0 +1,22 @@
+2026-10-08 17:06:13,634 INFO run b_tuning (hash 3165c718e829): 6000 chunks to do, 32 workers
+2026-10-08 17:14:06,886 INFO 300/6000 chunks, 7500 sequences, 473s elapsed
+2026-10-08 17:15:41,935 INFO 600/6000 chunks, 15000 sequences, 568s elapsed
+2026-10-08 17:17:03,894 INFO 900/6000 chunks, 22500 sequences, 650s elapsed
+2026-10-08 17:18:55,936 INFO 1200/6000 chunks, 30000 sequences, 762s elapsed
+2026-10-08 17:19:20,806 INFO 1500/6000 chunks, 37500 sequences, 787s elapsed
+2026-10-08 17:19:32,481 INFO 1800/6000 chunks, 45000 sequences, 799s elapsed
+2026-10-08 17:19:42,801 INFO 2100/6000 chunks, 52500 sequences, 809s elapsed
+2026-10-08 17:19:56,944 INFO 2400/6000 chunks, 60000 sequences, 823s elapsed
+2026-10-08 17:29:50,785 INFO 2700/6000 chunks, 67500 sequences, 1417s elapsed
+2026-10-08 17:38:05,826 INFO 3000/6000 chunks, 75000 sequences, 1912s elapsed
+2026-10-08 17:44:10,902 INFO 3300/6000 chunks, 82500 sequences, 2277s elapsed
+2026-10-08 17:51:05,782 INFO 3600/6000 chunks, 90000 sequences, 2692s elapsed
+2026-10-08 17:55:02,894 INFO 3900/6000 chunks, 97500 sequences, 2929s elapsed
+2026-10-08 17:57:51,990 INFO 4200/6000 chunks, 105000 sequences, 3098s elapsed
+2026-10-08 18:00:14,427 INFO 4500/6000 chunks, 112500 sequences, 3241s elapsed
+2026-10-08 18:02:57,502 INFO 4800/6000 chunks, 120000 sequences, 3404s elapsed
+2026-10-08 18:03:52,237 INFO 5100/6000 chunks, 127500 sequences, 3459s elapsed
+2026-10-08 18:04:32,094 INFO 5400/6000 chunks, 135000 sequences, 3498s elapsed
+2026-10-08 18:05:09,522 INFO 5700/6000 chunks, 142500 sequences, 3536s elapsed
+2026-10-08 18:05:55,696 INFO 6000/6000 chunks, 150000 sequences, 3582s elapsed
+2026-10-08 18:06:11,671 INFO done: 150000 sequences, 337917758 steps total

@@ -103,7 +103,7 @@ configs/                   run configurations (c_main, c_tuning_small, scaling, 
 deployment/                AWS EC2 launch / watch / teardown / audit scripts, run records
 tests/                     134 tests (every row of the edge-case matrix)
 data/                      results of the main run reported in the paper (see below)
-proofs/                    evidence of the AWS cloud runs (logs, machine records, CloudTrail, Billing)
+proofs/                    evidence of the AWS cloud runs (logs, machine records, CloudTrail)
 paper/restructured/        paper source, tables, figures, PDFs
 run_all.sh                 the full pipeline in one command
 ```
@@ -177,7 +177,7 @@ output with readable method names.
 
 Launch, watch, teardown and audit scripts are in `deployment/`; each run ended with an
 audit confirming that no AWS resources were left running. Evidence that the runs took
-place (server logs, machine records, run records, AWS CloudTrail and Billing) is
+place (server logs, machine records, run records, AWS CloudTrail) is
 collected in [`proofs/`](proofs/README.md).
 
 ## Limitations

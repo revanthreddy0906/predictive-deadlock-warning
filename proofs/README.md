@@ -3,7 +3,7 @@
 All experiments ran on Amazon Web Services (AWS) EC2 in the Asia Pacific (Hyderabad)
 region, `ap-south-2`. Each server was deleted after its run, so neither appears as a
 running instance. The evidence is the logs and records the servers wrote during the runs
-(in this repository) and AWS's own CloudTrail and Billing records (`screenshots/`).
+(in this repository) and AWS's own CloudTrail records (`screenshots/`).
 
 All times are UTC. India time (IST) = UTC + 5 h 30 min.
 
@@ -19,10 +19,11 @@ All times are UTC. India time (IST) = UTC + 5 h 30 min.
 | Terminated | 11:31 UTC (17:01 IST) | 19:49 UTC (01:19 IST, 9 Oct) |
 | Instance hours | 5.84 | 2.86 |
 | Estimated cost | about US$8.39 | about US$4.11 |
-| Instance ID | `i-0fc2fafad89770581` | (in the CloudTrail record) |
+| Instance ID | `i-0fc2fafad89770581` | `i-0f42079935bf28086` |
 
 Both runs were paid from AWS credits; the total was about US$12.50. The CloudTrail
-`RunInstances` events show the same launch times (11:11 IST on 21 Oct, 22:27 IST on 8 Oct).
+records match these times: `RunInstances` at 05:41:48 and 16:57:57 UTC,
+`TerminateInstances` at 11:31:59 and 19:49:24 UTC.
 
 ## Where the evidence is
 
@@ -34,7 +35,7 @@ Both runs were paid from AWS credits; the total was about US$12.50. The CloudTra
 | Results produced on the server | [`data/c_main/eval/`](../data/c_main/eval) | [`exploratory_run_oct08/eval/`](exploratory_run_oct08/eval) |
 | Run record: launch and termination times, hours, cost breakdown, cost guards, clean-up audit | [`deployment/aws_run.json`](../deployment/aws_run.json) | [`deployment/aws_run_b.json`](../deployment/aws_run_b.json) |
 | AWS instance ID | [`main_run_instance_id.txt`](main_run_instance_id.txt) | |
-| AWS CloudTrail and Billing | [`screenshots/`](screenshots) | [`screenshots/`](screenshots) |
+| AWS CloudTrail launch and termination records | [`screenshots/`](screenshots/README.md) | [`screenshots/`](screenshots/README.md) |
 
 The scripts used to launch, watch, delete and audit the servers are in
 [`deployment/`](../deployment).
@@ -48,6 +49,6 @@ The scripts used to launch, watch, delete and audit the servers are in
 - The main run's pipeline took 5 h 40 min, including a 42-minute stall caused by too many
   threads per worker; it was fixed and resumed.
 - Costs are estimates from instance hours at US$1.428/hour plus disk and IP charges; the
-  exact amounts are in the Billing screenshots.
+  exact amounts are in the AWS Billing console.
 - Only the main run's results are reported in the paper. The exploratory run used fewer
   methods and is never pooled with it.

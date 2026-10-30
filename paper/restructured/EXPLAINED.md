@@ -497,7 +497,7 @@ Note that 0.24 here is the *equal-weight* version. The paper's final rule-based 
 
 ## Table XII — Predicting deadlock (instead of unsafe)
 
-Predicting deadlocks up to 20 steps ahead. The first three numbers are on the common subset (25,862 deadlocks, all methods on the same sequences); the last column is on the full population (77,700 transitions).
+Predicting deadlocks up to 20 steps ahead. The first three numbers are on the common subset (25,862 deadlocks, all methods on the same sequences); the last column is on the full population (77,700 deadlocks).
 
 | Method | Precision | Recall | F1 (subset) | F1 (full) |
 |---|---|---|---|---|

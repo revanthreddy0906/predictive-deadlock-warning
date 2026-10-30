@@ -11,7 +11,7 @@ This project measures **how early, how reliably and at what compute cost** that
 transition can be predicted, using a discrete-event simulator that grants every valid
 request (so unsafe states can actually happen) and Banker's algorithm as ground truth.
 
-- Paper: [`paper/restructured/Predictive_Deadlock_Warning.pdf`](paper/restructured/Predictive_Deadlock_Warning.pdf) (LaTeX source: `paper/restructured/main.tex`)
+- Paper: [`paper/restructured/Predictive_Deadlock_Warning.pdf`](paper/restructured/Predictive_Deadlock_Warning.pdf), editable Word version [`Predictive_Deadlock_Warning.docx`](paper/restructured/Predictive_Deadlock_Warning.docx) (LaTeX source: `paper/restructured/main.tex`; Word build: `paper/restructured/docx/build.sh`)
 - Plain-language explanation of every table and figure: [`paper/restructured/EXPLAINED.pdf`](paper/restructured/EXPLAINED.pdf)
 
 ## Main results
